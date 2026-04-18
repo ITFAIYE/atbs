@@ -1,0 +1,2772 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ankara İtfaiyesi – Araç Yönetim Sistemi</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg-deep:#070b1a;
+  --bg-card:#0f1428;
+  --bg-panel:#141929;
+  --bg-input:#0c1020;
+  --accent:#e63946;
+  --accent2:#ff6b78;
+  --accent-glow:rgba(230,57,70,0.35);
+  --border:rgba(255,255,255,0.07);
+  --border-bright:rgba(255,255,255,0.13);
+  --text:#e8eaed;
+  --text-muted:#8892a4;
+  --text-dim:#4a5568;
+  --green:#22c55e;
+  --yellow:#f59e0b;
+  --red:#ef4444;
+  --blue:#3b82f6;
+  --purple:#8b5cf6;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:var(--bg-deep);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 15% 10%,rgba(230,57,70,0.1) 0%,transparent 55%),radial-gradient(ellipse at 85% 90%,rgba(99,102,241,0.07) 0%,transparent 55%);pointer-events:none;z-index:0;}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--bg-deep);}
+::-webkit-scrollbar-thumb{background:rgba(230,57,70,0.4);border-radius:3px;}
+
+/* ── LOGIN ── */
+#loginScreen{position:fixed;inset:0;background:var(--bg-deep);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;}
+.login-card{background:var(--bg-card);border:1px solid var(--border);border-radius:24px;padding:52px 44px;width:100%;max-width:420px;box-shadow:0 32px 96px rgba(0,0,0,0.6);animation:fadeUp .6s ease both;}
+.login-logo{font-family:'Rajdhani',sans-serif;font-size:2.6rem;font-weight:700;background:linear-gradient(135deg,#fff 0%,#c9cdd4 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:1px;}
+.login-sub{color:var(--text-muted);font-size:.85rem;margin-top:4px;margin-bottom:36px;}
+.fire-badge{display:inline-block;background:rgba(230,57,70,.15);border:1px solid rgba(230,57,70,.35);color:var(--accent2);font-size:.72rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:5px 14px;border-radius:99px;margin-bottom:20px;}
+.form-ctrl{background:var(--bg-input);border:1px solid var(--border-bright);color:var(--text);border-radius:12px;padding:14px 16px;width:100%;font-size:.95rem;outline:none;transition:border-color .2s;}
+.form-ctrl:focus{border-color:var(--accent);}
+.form-ctrl::placeholder{color:var(--text-dim);}
+.btn-fire{background:linear-gradient(135deg,#e63946 0%,#c1121f 100%);color:#fff;border:none;border-radius:14px;padding:14px;width:100%;font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;letter-spacing:.5px;cursor:pointer;box-shadow:0 8px 24px var(--accent-glow);transition:transform .2s,box-shadow .2s;}
+.btn-fire:hover{transform:translateY(-2px);box-shadow:0 14px 36px var(--accent-glow);}
+.btn-fire:active{transform:translateY(0);}
+.login-error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ff8a92;border-radius:10px;padding:10px 14px;font-size:.85rem;display:none;}
+
+/* ── NAVBAR ── */
+#appBar{background:rgba(15,20,40,.95);border-bottom:1px solid var(--border);backdrop-filter:blur(12px);position:sticky;top:0;z-index:1000;padding:0 20px;}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:64px;max-width:1600px;margin:0 auto;}
+.nav-logo{font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;color:#fff;letter-spacing:.5px;display:flex;align-items:center;gap:10px;}
+.nav-logo span{color:var(--accent);}
+.nav-right{display:flex;align-items:center;gap:12px;}
+.user-chip{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:99px;padding:6px 14px;font-size:.8rem;color:var(--text-muted);display:flex;align-items:center;gap:8px;}
+.role-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.role-dot.admin{background:#e63946;}
+.role-dot.editor{background:#f59e0b;}
+.role-dot.viewer{background:#3b82f6;}
+.btn-sm{padding:8px 16px;font-size:.82rem;border-radius:10px;border:none;cursor:pointer;font-weight:600;transition:.2s;}
+.btn-outline{background:transparent;border:1px solid var(--border-bright);color:var(--text-muted);}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger-sm{background:rgba(230,57,70,.15);border:1px solid rgba(230,57,70,.3);color:var(--accent2);}
+.btn-danger-sm:hover{background:rgba(230,57,70,.25);}
+.btn-success-sm{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#4ade80;}
+.btn-success-sm:hover{background:rgba(34,197,94,.25);}
+.btn-primary-sm{background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);color:#93c5fd;}
+.btn-primary-sm:hover{background:rgba(59,130,246,.25);}
+.btn-warn-sm{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:#fcd34d;}
+.btn-warn-sm:hover{background:rgba(245,158,11,.25);}
+
+/* ── LAYOUT ── */
+#appRoot{display:none;max-width:1600px;margin:0 auto;padding:20px 16px;}
+
+/* ── ALERTS PANEL ── */
+.alert-panel{background:linear-gradient(135deg,rgba(239,68,68,.08),rgba(245,158,11,.05));border:1px solid rgba(239,68,68,.2);border-radius:16px;padding:16px 20px;margin-bottom:20px;}
+.alert-panel-title{font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;color:#ff8a92;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.alert-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;font-size:.82rem;margin-bottom:6px;}
+.alert-item:last-child{margin-bottom:0;}
+.alert-item.overdue{background:rgba(239,68,68,.1);color:#fca5a5;animation:blink 1.5s ease-in-out infinite;}
+.alert-item.soon{background:rgba(245,158,11,.08);color:#fcd34d;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* ── SEARCH BAR ── */
+.search-wrap{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.search-input{flex:1;min-width:200px;background:var(--bg-card);border:1px solid var(--border-bright);color:var(--text);border-radius:12px;padding:12px 16px;font-size:.9rem;outline:none;transition:border-color .2s;}
+.search-input:focus{border-color:var(--accent);}
+.filter-select{background:var(--bg-card);border:1px solid var(--border-bright);color:var(--text);border-radius:12px;padding:12px 14px;font-size:.85rem;outline:none;cursor:pointer;}
+.filter-select option{background:var(--bg-panel);}
+
+/* ── REGION TABS ── */
+.region-tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;}
+.region-tab{padding:9px 18px;border-radius:12px;font-size:.85rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-muted);transition:.2s;font-family:'Rajdhani',sans-serif;letter-spacing:.3px;white-space:nowrap;}
+.region-tab.active{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 4px 16px var(--accent-glow);}
+.region-tab:hover:not(.active){border-color:var(--border-bright);color:var(--text);}
+
+/* ── VEHICLES GRID ── */
+.vehicles-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+
+/* ── VEHICLE CARD ── */
+.vehicle-card{background:var(--bg-card);border:1px solid var(--border);border-radius:18px;overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s;cursor:pointer;}
+.vehicle-card:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,0.4);border-color:var(--border-bright);}
+.vehicle-card.faulty{border-color:rgba(239,68,68,.35);}
+.vehicle-card.faulty .vc-status-bar{background:var(--red);}
+.vehicle-card.active .vc-status-bar{background:var(--green);}
+.vehicle-card.maintenance{border-color:rgba(245,158,11,.35);}
+.vehicle-card.maintenance .vc-status-bar{background:var(--yellow);}
+.vc-status-bar{height:3px;width:100%;}
+.vc-header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;}
+.vc-plate{font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;color:#fff;letter-spacing:1px;}
+.vc-type{font-size:.75rem;color:var(--text-muted);background:rgba(255,255,255,.05);padding:3px 10px;border-radius:99px;border:1px solid var(--border);}
+.vc-body{padding:0 18px 16px;}
+.vc-station{font-size:.85rem;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.vc-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.badge-small{padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:600;}
+.badge-ok{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25);color:#4ade80;}
+.badge-warn{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);color:#fcd34d;}
+.badge-danger{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);color:#fca5a5;}
+.badge-blue{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.25);color:#93c5fd;}
+.vc-footer{border-top:1px solid var(--border);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;}
+.vc-km{font-size:.8rem;color:var(--text-muted);}
+.vc-km strong{color:var(--text);font-size:.88rem;}
+.vc-edit-btn{padding:6px 14px;font-size:.78rem;border-radius:8px;background:rgba(230,57,70,.1);border:1px solid rgba(230,57,70,.25);color:var(--accent2);cursor:pointer;font-weight:600;transition:.2s;}
+.vc-edit-btn:hover{background:rgba(230,57,70,.2);}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:5000;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;backdrop-filter:blur(4px);}
+.modal-box{background:var(--bg-panel);border:1px solid var(--border);border-radius:20px;width:100%;max-width:860px;margin:auto;animation:fadeUp .3s ease both;position:relative;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:22px 24px 18px;border-bottom:1px solid var(--border);}
+.modal-title{font-family:'Rajdhani',sans-serif;font-size:1.5rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:12px;}
+.modal-close{background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text-muted);width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.1rem;transition:.2s;}
+.modal-close:hover{background:rgba(230,57,70,.15);color:var(--accent2);}
+.modal-tabs{display:flex;gap:4px;padding:14px 24px 0;border-bottom:1px solid var(--border);overflow-x:auto;}
+.modal-tab{padding:9px 18px;font-size:.84rem;font-weight:600;cursor:pointer;border-radius:10px 10px 0 0;border:1px solid transparent;border-bottom:none;color:var(--text-muted);white-space:nowrap;transition:.2s;}
+.modal-tab.active{background:var(--bg-card);border-color:var(--border);color:var(--text);}
+.modal-tab:hover:not(.active){color:var(--text);}
+.modal-body{padding:24px;}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+
+/* ── FORM ELEMENTS ── */
+.form-label{font-size:.8rem;font-weight:600;color:var(--text-muted);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.5px;}
+.form-input{background:var(--bg-input);border:1px solid var(--border-bright);color:var(--text);border-radius:10px;padding:11px 14px;width:100%;font-size:.9rem;outline:none;transition:border-color .2s;font-family:'Inter',sans-serif;}
+.form-input:focus{border-color:var(--accent);}
+.form-input:disabled{opacity:.5;cursor:not-allowed;}
+/* Select disabled düzeltmesi — tarayıcı kendi bg'sini eziyor, bunu engelle */
+select.form-input:disabled{background-color:var(--bg-input)!important;color:var(--text)!important;opacity:.6;}
+/* readonly-select: disabled kullanmadan görsel kilitleme */
+select.form-input.readonly-select{pointer-events:none;user-select:none;cursor:default;opacity:.65;background-image:none;}
+input.form-input.readonly-field{pointer-events:none;user-select:none;cursor:default;opacity:.65;}
+.form-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238892a4' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.form-row.three{grid-template-columns:1fr 1fr 1fr;}
+.form-group{margin-bottom:14px;}
+.btn-save{background:linear-gradient(135deg,#e63946,#c1121f);color:#fff;border:none;border-radius:12px;padding:12px 28px;font-weight:700;cursor:pointer;font-size:.95rem;box-shadow:0 6px 20px var(--accent-glow);transition:.2s;font-family:'Rajdhani',sans-serif;letter-spacing:.5px;}
+.btn-save:hover{transform:translateY(-2px);box-shadow:0 10px 28px var(--accent-glow);}
+.btn-add{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25);color:#4ade80;border-radius:10px;padding:9px 18px;font-size:.85rem;font-weight:600;cursor:pointer;transition:.2s;}
+.btn-add:hover{background:rgba(34,197,94,.2);}
+.btn-del{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#fca5a5;border-radius:8px;padding:6px 10px;font-size:.78rem;cursor:pointer;transition:.2s;}
+.btn-del:hover{background:rgba(239,68,68,.2);}
+
+/* ── TABLES ── */
+.data-table{width:100%;border-collapse:collapse;font-size:.85rem;}
+.data-table th{color:var(--text-muted);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;}
+.data-table td{padding:11px 12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:rgba(255,255,255,.02);}
+.td-plate{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.95rem;}
+
+/* ── INFO GRID ── */
+.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+.info-item{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;}
+.info-item-label{font-size:.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+.info-item-value{font-size:.95rem;font-weight:600;color:var(--text);}
+
+/* ── CHART ── */
+.chart-container{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;}
+
+/* ── TIMELINE ── */
+.timeline{position:relative;padding-left:24px;}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:1px;background:var(--border);}
+.tl-item{position:relative;margin-bottom:16px;padding-left:16px;}
+.tl-dot{position:absolute;left:-20px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid var(--bg-panel);box-shadow:0 0 0 2px var(--accent-glow);}
+.tl-date{font-size:.75rem;color:var(--text-dim);margin-bottom:2px;}
+.tl-text{font-size:.87rem;color:var(--text);}
+.tl-sub{font-size:.78rem;color:var(--text-muted);margin-top:2px;}
+
+/* ── DOCUMENT LIST ── */
+.doc-item{display:flex;align-items:center;justify-content:space-between;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-bottom:8px;}
+.doc-icon{font-size:1.4rem;margin-right:12px;}
+.doc-name{font-size:.88rem;font-weight:600;color:var(--text);}
+.doc-meta{font-size:.75rem;color:var(--text-muted);margin-top:2px;}
+.doc-actions{display:flex;gap:6px;}
+
+/* ── ADMIN PANEL ── */
+.admin-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px;}
+.admin-card-title{font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+
+/* ── FAB (add vehicle) ── */
+.fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:linear-gradient(135deg,#e63946,#c1121f);border:none;border-radius:50%;color:#fff;font-size:1.6rem;cursor:pointer;box-shadow:0 8px 24px var(--accent-glow);z-index:900;transition:.2s;display:flex;align-items:center;justify-content:center;}
+.fab:hover{transform:scale(1.08);box-shadow:0 12px 36px var(--accent-glow);}
+
+/* ── LOG STAMP ── */
+.log-stamp{font-size:.72rem;color:var(--text-dim);margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;align-items:center;gap:6px;}
+.log-stamp span{color:var(--text-muted);}
+
+/* ── STATS CARDS ── */
+.stat-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center;}
+.stat-num{font-family:'Rajdhani',sans-serif;font-size:2rem;font-weight:700;}
+.stat-lbl{font-size:.75rem;color:var(--text-muted);margin-top:2px;}
+
+/* ── UPLOAD AREA ── */
+.upload-area{border:2px dashed var(--border-bright);border-radius:14px;padding:28px;text-align:center;cursor:pointer;transition:.2s;}
+.upload-area:hover{border-color:var(--accent);background:rgba(230,57,70,.04);}
+.upload-area p{color:var(--text-muted);font-size:.87rem;margin-top:8px;}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;align-items:center;}
+.toast{background:var(--bg-panel);border:1px solid var(--border);border-radius:12px;padding:12px 22px;font-size:.87rem;font-weight:500;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:toastIn .3s ease;white-space:nowrap;}
+.toast.success{border-color:rgba(34,197,94,.35);color:#4ade80;}
+.toast.error{border-color:rgba(239,68,68,.35);color:#fca5a5;}
+.toast.info{border-color:rgba(59,130,246,.35);color:#93c5fd;}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── STATUS INDICATOR ── */
+.status-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;}
+.status-dot.green{background:var(--green);box-shadow:0 0 6px var(--green);}
+.status-dot.red{background:var(--red);box-shadow:0 0 6px var(--red);}
+.status-dot.yellow{background:var(--yellow);box-shadow:0 0 6px var(--yellow);}
+.status-dot.blue{background:var(--blue);box-shadow:0 0 6px var(--blue);}
+
+/* ── TYPE TABS ── */
+.type-tabs{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px;flex-wrap:nowrap;}
+.type-tab{padding:7px 14px;border-radius:10px;font-size:.8rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-muted);transition:.2s;font-family:'Rajdhani',sans-serif;white-space:nowrap;flex-shrink:0;}
+.type-tab.active{background:rgba(59,130,246,.2);border-color:rgba(59,130,246,.5);color:#93c5fd;}
+.type-tab:hover:not(.active){border-color:var(--border-bright);color:var(--text);}
+
+/* ── PHOTO TAB ── */
+.photo-preview{width:100%;max-height:360px;object-fit:cover;border-radius:14px;display:block;margin-bottom:14px;}
+.photo-placeholder{width:100%;height:220px;background:var(--bg-card);border:2px dashed var(--border-bright);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-muted);font-size:.9rem;gap:12px;cursor:pointer;}
+.photo-placeholder:hover{border-color:var(--accent);}
+
+/* ── VEHICLE PHOTO IN CARD ── */
+.vc-photo{width:100%;height:140px;object-fit:cover;display:block;background:var(--bg-panel);}
+.vc-photo-placeholder{width:100%;height:140px;background:linear-gradient(135deg,#0c1020,#141929);display:flex;align-items:center;justify-content:center;font-size:3rem;color:var(--text-dim);}
+.vc-plate-under{text-align:center;font-family:'Rajdhani',sans-serif;font-size:.8rem;font-weight:700;letter-spacing:2px;color:var(--text-muted);background:rgba(0,0,0,.4);padding:4px 0;border-bottom:1px solid var(--border);}
+
+/* ── SPEC SECTIONS ── */
+.spec-section-title{font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.spec-section-title:first-child{margin-top:0;}
+.spec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:6px;}
+
+/* ── FAULT CAT VIEW ── */
+.fault-cat-group{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;}
+.fault-cat-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;transition:background .2s;}
+.fault-cat-header:hover{background:rgba(255,255,255,.03);}
+.fault-cat-title{font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:10px;}
+.fault-cat-count{font-size:.75rem;padding:2px 10px;border-radius:99px;}
+.fault-cat-count.has-active{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);}
+.fault-cat-count.all-done{background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.2);}
+.fault-cat-body{border-top:1px solid var(--border);padding:12px 16px;display:none;}
+.fault-cat-body.open{display:block;}
+.fault-detail-card{background:var(--bg-panel);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;}
+.fault-detail-card:last-child{margin-bottom:0;}
+.fault-detail-desc{font-size:.88rem;color:var(--text);margin-bottom:8px;line-height:1.5;}
+.fault-detail-meta{display:flex;gap:12px;flex-wrap:wrap;font-size:.78rem;color:var(--text-muted);}
+.fault-status-toggle{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);flex-wrap:wrap;}
+.btn-status-faal{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25);color:#4ade80;border-radius:8px;padding:5px 12px;font-size:.78rem;cursor:pointer;font-weight:600;}
+.btn-status-faal:hover{background:rgba(34,197,94,.2);}
+.btn-status-devam{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);color:#fca5a5;border-radius:8px;padding:5px 12px;font-size:.78rem;cursor:pointer;font-weight:600;}
+.btn-status-devam:hover{background:rgba(239,68,68,.2);}
+.btn-edit-sm{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);color:#93c5fd;border-radius:8px;padding:6px 10px;font-size:.78rem;cursor:pointer;transition:.2s;}
+.btn-edit-sm:hover{background:rgba(59,130,246,.2);}
+
+/* ── NOTES ── */
+.note-bar{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.note-bar-text{font-size:.87rem;color:var(--text);flex:1;line-height:1.5;word-break:break-word;}
+.note-bar-meta{font-size:.73rem;color:var(--text-dim);margin-top:4px;}
+.note-bar-actions{display:flex;gap:6px;flex-shrink:0;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .modal-overlay{padding:0;align-items:flex-end;}
+  .modal-box{border-radius:20px 20px 0 0;max-height:92vh;overflow-y:auto;}
+  .modal-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .nav-inner{padding:0 12px;}
+}
+@media(max-width:640px){
+  .form-row,.form-row.three{grid-template-columns:1fr;}
+  .modal-box{border-radius:16px 16px 0 0;}
+  .modal-body{padding:12px;}
+  .modal-header{padding:14px 16px 12px;}
+  .vehicles-grid{grid-template-columns:1fr;}
+  .nav-logo{font-size:1rem;}
+  .nav-logo span:first-of-type{display:none;}
+  .search-wrap{flex-direction:column;}
+  .search-wrap .btn-sm{flex:1;}
+  .region-tabs{overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;-webkit-overflow-scrolling:touch;}
+  .type-tabs{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;}
+  .stat-cards{grid-template-columns:repeat(2,1fr);}
+  .modal-tabs{padding:10px 10px 0;gap:2px;}
+  .modal-tab{padding:8px 10px;font-size:.74rem;}
+  #appRoot{padding:10px 8px;}
+  .spec-grid{grid-template-columns:1fr 1fr;}
+  .login-card{padding:28px 18px;border-radius:18px;}
+  .admin-card{padding:14px;}
+  .data-table{font-size:.78rem;}
+  .data-table th,.data-table td{padding:8px 8px;}
+  .info-grid{grid-template-columns:1fr 1fr;}
+  .vc-header{padding:12px 14px 10px;}
+  .vc-body{padding:0 14px 12px;}
+  .vc-footer{padding:8px 14px;}
+  .user-chip{font-size:.72rem;padding:5px 10px;}
+  #appBar{padding:0 10px;}
+  .fab{bottom:16px;right:16px;width:50px;height:50px;font-size:1.4rem;}
+  .toast-wrap{bottom:16px;left:8px;right:8px;transform:none;width:auto;}
+  .toast{white-space:normal;text-align:center;}
+  .btn-sm{padding:7px 12px;font-size:.78rem;}
+}
+.hidden{display:none!important;}
+.section-title{font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.divider{border:none;border-top:1px solid var(--border);margin:20px 0;}
+textarea.form-input{resize:vertical;min-height:80px;}
+.empty-state{text-align:center;padding:48px;color:var(--text-muted);font-size:.9rem;}
+.empty-state .es-icon{font-size:2.5rem;margin-bottom:12px;}
+</style>
+</head>
+<body>
+
+<!-- ════════ LOGIN ════════ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div style="text-align:center;margin-bottom:4px;">
+      <span style="font-size:3.2rem;">🚒</span>
+    </div>
+    <div style="text-align:center;">
+      <div class="fire-badge">Ankara Büyükşehir Belediyesi</div>
+      <div class="login-logo">İTFAİYE DAIRE BAŞKANLIĞI</div>
+      <div class="login-sub">Araç Yönetim & Takip Sistemi</div>
+    </div>
+    <div id="loginError" class="login-error">⚠ Kullanıcı adı veya şifre hatalı.</div>
+    <div class="form-group" style="margin-top:16px;">
+      <label class="form-label">Kullanıcı Adı</label>
+      <input id="loginUser" class="form-ctrl" type="text" placeholder="kullanici.adi" autocomplete="username"/>
+    </div>
+    <div class="form-group" style="margin-top:12px;margin-bottom:20px;">
+      <label class="form-label">Şifre</label>
+      <input id="loginPass" class="form-ctrl" type="password" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <button class="btn-fire" onclick="doLogin()">GİRİŞ YAP</button>
+
+  </div>
+</div>
+
+<!-- ════════ APP ════════ -->
+<nav id="appBar" style="display:none;">
+  <div class="nav-inner">
+    <div class="nav-logo">🚒 <span>ANKARA</span> İTFAİYESİ <span style="font-size:.75rem;color:var(--text-dim);font-weight:400;margin-left:6px;">Araç Yönetim</span></div>
+    <div class="nav-right">
+      <div id="userChip" class="user-chip"></div>
+      <button class="btn-sm btn-outline" onclick="openChangeMyPassword()" title="Şifremi Değiştir">🔐</button>
+      <button class="btn-sm btn-outline" onclick="showAdminPanel()" id="adminBtn" style="display:none;">⚙ Admin</button>
+      <button class="btn-sm btn-danger-sm" onclick="doLogout()">Çıkış</button>
+    </div>
+  </div>
+</nav>
+
+<div id="appRoot">
+  <!-- Critical Alerts -->
+  <div id="alertPanel" class="alert-panel" style="display:none;">
+    <div class="alert-panel-title">🔔 Kritik Hatırlatıcılar</div>
+    <div id="alertItems"></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stat-cards" id="statCards"></div>
+
+  <!-- Search Toolbar -->
+  <div class="search-wrap">
+    <div style="position:relative;flex:1;min-width:220px;">
+      <input id="searchInput" class="search-input" type="text" placeholder="🔍 Plaka, araç tipi, istasyon ara…" oninput="applySearchAndRender()"/>
+      <div id="searchDropdown" style="display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--bg-panel);border:1px solid var(--border-bright);border-radius:12px;z-index:500;max-height:280px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.5);"></div>
+    </div>
+    <button id="filterOpenBtn" class="btn-sm btn-outline" onclick="openSearchModal()" style="min-width:120px;">⚙ Filtrele</button>
+    <button class="btn-sm btn-primary-sm" id="backupBtn" onclick="exportData()" style="display:none;">📤 Yedekle</button>
+    <button class="btn-sm btn-warn-sm" id="restoreBtn" onclick="document.getElementById('importFile').click()" style="display:none;">📥 Yükle</button>
+    <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)"/>
+  </div>
+  <div id="activeFiltersBar" style="display:none;margin-bottom:10px;font-size:.8rem;color:var(--text-muted);flex-wrap:wrap;align-items:center;gap:8px;">
+    <span>🔍 Filtre:</span>
+    <span id="activeFilterText" style="color:var(--accent2);"></span>
+    <button class="btn-sm btn-outline" style="padding:3px 10px;font-size:.75rem;" onclick="clearSearch()">✕ Temizle</button>
+  </div>
+
+  <!-- Type Tabs as Toolbar -->
+  <div class="type-tabs" id="typeTabs">
+    <button class="type-tab active" onclick="setTypeFilter('all',this)" data-type="all">🚒 Tümü</button>
+    <button class="type-tab" onclick="setTypeFilter('Arazöz',this)" data-type="Arazöz">🔴 Arazöz</button>
+    <button class="type-tab" onclick="setTypeFilter('Tanker',this)" data-type="Tanker">🟠 Tanker</button>
+    <button class="type-tab" onclick="setTypeFilter('Merdiven',this)" data-type="Merdiven">🟡 Merdiven</button>
+    <button class="type-tab" onclick="setTypeFilter('Kurtarma',this)" data-type="Kurtarma">🟢 Kurtarma</button>
+    <button class="type-tab" onclick="setTypeFilter('Şnorkel',this)" data-type="Şnorkel">🔵 Şnorkel</button>
+    <button class="type-tab" onclick="setTypeFilter('Hizmet',this)" data-type="Hizmet">⚪ Hizmet</button>
+    <button class="type-tab" onclick="setTypeFilter('Sivil',this)" data-type="Sivil">🟣 Sivil</button>
+    <button class="type-tab" onclick="setTypeFilter('Diger',this)" data-type="Diger">⬜ Diğer</button>
+  </div>
+
+  <!-- Vehicle Grid -->
+  <div class="vehicles-grid" id="vehicleGrid"></div>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fabBtn" onclick="openAddVehicle()" title="Araç Ekle">+</button>
+
+<!-- ════════ CHANGE MY PASSWORD MODAL ════════ -->
+<div class="modal-overlay hidden" id="changeMyPassModal">
+  <div class="modal-box" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title">🔐 Şifremi Değiştir</div>
+      <div class="modal-close" onclick="closeModal('changeMyPassModal')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Mevcut Şifre</label><input class="form-input" id="mp_old" type="password" placeholder="••••••"/></div>
+      <div class="form-group"><label class="form-label">Yeni Şifre</label><input class="form-input" id="mp_new" type="password" placeholder="••••••"/></div>
+      <div class="form-group"><label class="form-label">Yeni Şifre (Tekrar)</label><input class="form-input" id="mp_new2" type="password" placeholder="••••••"/></div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+        <button class="btn-sm btn-outline" onclick="closeModal('changeMyPassModal')">İptal</button>
+        <button class="btn-save" onclick="changeMyPassword()">🔐 Güncelle</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ SEARCH MODAL ════════ -->
+<div class="modal-overlay hidden" id="searchModal">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="modal-header">
+      <div class="modal-title">🔍 Ara / Filtrele</div>
+      <div class="modal-close" onclick="closeModal('searchModal')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Arama (Plaka, Marka, İstasyon…)</label>
+        <input id="searchInput" class="form-input" type="text" placeholder="Plaka, araç tipi, istasyon ara…" oninput="applySearchFilters()"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Durum</label>
+        <select id="filterStatus" class="form-input form-select" onchange="applySearchFilters()">
+          <option value="">Tüm Durumlar</option>
+          <option value="faal">Faal</option>
+          <option value="arizali">Arızalı</option>
+          <option value="bakim">Bakımda</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bölge</label>
+        <select id="filterRegion" class="form-input form-select" onchange="applySearchFilters()">
+          <option value="all">Tüm Bölgeler</option>
+          <option value="1">Bölge 1</option>
+          <option value="2">Bölge 2</option>
+          <option value="3">Bölge 3</option>
+        </select>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+        <button class="btn-sm btn-outline" onclick="clearSearch()">✕ Temizle</button>
+        <button class="btn-save" onclick="applySearchFilters();closeModal('searchModal');">Uygula</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ════════ VEHICLE MODAL ════════ -->
+<div class="modal-overlay hidden" id="vehicleModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="vModalTitle">🚒 Araç Detayı</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn-sm btn-save" id="vSaveBtn" onclick="saveVehicle()" style="display:none;">💾 Kaydet</button>
+        <button class="btn-sm btn-danger-sm" id="vDeleteBtn" onclick="deleteVehicle()" style="display:none;">🗑 Sil</button>
+        <div class="modal-close" onclick="closeModal('vehicleModal')">✕</div>
+      </div>
+    </div>
+    <div class="modal-tabs" id="vModalTabs">
+      <button class="modal-tab active" onclick="switchModalTab('vt-info',this)">📋 Genel Bilgi</button>
+      <button class="modal-tab" onclick="switchModalTab('vt-specs',this)">⚙ Üst Yapı</button>
+      <button class="modal-tab" id="photoTabBtn" onclick="switchModalTab('vt-photo',this)">📷 Fotoğraf</button>
+      <button class="modal-tab" onclick="switchModalTab('vt-fault',this)">🔧 Arıza</button>
+      <button class="modal-tab" onclick="switchModalTab('vt-notes',this)">📝 Notlar</button>
+      <button class="modal-tab" onclick="switchModalTab('vt-stats',this)">📊 İstatistik</button>
+      <button class="modal-tab" onclick="switchModalTab('vt-station',this)">🏢 İstasyon</button>
+      <button class="modal-tab" onclick="switchModalTab('vt-docs',this)">📄 Evraklar</button>
+      <button class="modal-tab" onclick="switchModalTab('vt-files',this)">📎 Dosyalar</button>
+    </div>
+    <div class="modal-body">
+      <!-- TAB: Genel Bilgi -->
+      <div class="tab-pane active" id="vt-info">
+        <div class="form-row">
+          <div><label class="form-label">Plaka</label><input class="form-input" id="v_plate" placeholder="06 AA 0000"/></div>
+          <div id="vehicleTypeGroup"><label class="form-label">Araç Tipi</label>
+            <select class="form-input form-select" id="v_type">
+              <option>Arazöz</option><option>Tanker</option><option>Merdiven</option>
+              <option>Kurtarma</option><option>Şnorkel</option><option>Hizmet</option>
+              <option>Sivil</option><option>Su Tankeri</option><option>Ambulans</option>
+              <option>Komuta Aracı</option><option>KBRN Aracı</option><option>Lojistik</option><option>Diğer</option>
+            </select>
+          </div>
+        </div>
+        <!-- Havuz bağlantılı marka/model seçimi -->
+        <div id="poolSelectArea" style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:12px;padding:14px;margin-bottom:14px;">
+          <div style="font-size:.78rem;font-weight:700;color:#93c5fd;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">🚒 Araç Havuzundan Seç</div>
+          <div class="form-row">
+            <div>
+              <label class="form-label">Marka</label>
+              <select class="form-input form-select" id="pool_brand_sel" onchange="onPoolBrandChange()">
+                <option value="">— Marka Seçin —</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Model</label>
+              <select class="form-input form-select" id="pool_model_sel" onchange="onPoolModelChange()" disabled>
+                <option value="">— Önce Marka Seçin —</option>
+              </select>
+            </div>
+          </div>
+          <div id="poolSelectedInfo" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:8px;font-size:.82rem;color:#4ade80;">
+            ✓ Havuz bilgileri yüklendi — sadece araca özel alanları doldurun.
+          </div>
+        </div>
+        <div class="form-row three">
+          <div><label class="form-label">Marka</label><input class="form-input" id="v_brand" placeholder="Mercedes"/></div>
+          <div><label class="form-label">Model</label><input class="form-input" id="v_model" placeholder="Actros"/></div>
+          <div><label class="form-label">Model Yılı</label><input class="form-input" id="v_year" type="number" placeholder="2020"/></div>
+        </div>
+        <div class="form-row">
+          <div><label class="form-label">Şasi No</label><input class="form-input" id="v_chassis"/></div>
+          <div><label class="form-label">Motor No</label><input class="form-input" id="v_engine"/></div>
+        </div>
+        <div class="form-row three">
+          <div><label class="form-label">Güncel KM</label><input class="form-input" id="v_km" type="number" placeholder="125000"/></div>
+          <div><label class="form-label">Bölge</label>
+            <select class="form-input form-select" id="v_region">
+              <option value="1">Bölge 1</option><option value="2">Bölge 2</option><option value="3">Bölge 3</option>
+            </select>
+          </div>
+          <div><label class="form-label">Durum</label>
+            <select class="form-input form-select" id="v_status">
+              <option value="faal">Faal</option><option value="arizali">Arızalı</option><option value="bakim">Bakımda</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div><label class="form-label">Görevli İstasyon</label><input class="form-input" id="v_station" placeholder="Etimesgut İtfaiye İstasyonu"/></div>
+          <div><label class="form-label">Geçici Görev İstasyonu</label><input class="form-input" id="v_tempstation" placeholder="(varsa)"/></div>
+        </div>
+        <div class="form-row three">
+          <div><label class="form-label">Sigorta Bitiş</label><input class="form-input" id="v_insurance" type="date"/></div>
+          <div><label class="form-label">Kasko Bitiş</label><input class="form-input" id="v_kasko" type="date"/></div>
+          <div><label class="form-label">Muayene Bitiş</label><input class="form-input" id="v_inspection" type="date"/></div>
+        </div>
+        <div id="vt_info_log" class="log-stamp"></div>
+      </div>
+
+      <!-- TAB: Üst Yapı Bilgileri -->
+      <div class="tab-pane" id="vt-specs">
+        <div id="specsForm">
+          <div class="spec-section-title">📐 Boyut &amp; Ağırlık</div>
+          <div class="spec-grid">
+            <div class="form-group"><label class="form-label">Uzunluk (mm)</label><input class="form-input" id="sp_length" placeholder="9500"/></div>
+            <div class="form-group"><label class="form-label">Genişlik (mm)</label><input class="form-input" id="sp_width" placeholder="2500"/></div>
+            <div class="form-group"><label class="form-label">Yerden Yükseklik (mm)</label><input class="form-input" id="sp_height" placeholder="3200"/></div>
+            <div class="form-group"><label class="form-label">Araç Ağırlığı (ton)</label><input class="form-input" id="sp_weight" placeholder="18"/></div>
+            <div class="form-group"><label class="form-label">Destek Ayak Genişliği (mm)</label><input class="form-input" id="sp_outrigger" placeholder="4800"/></div>
+          </div>
+          <div class="spec-section-title">🚗 Motor &amp; Şanzıman</div>
+          <div class="spec-grid">
+            <div class="form-group"><label class="form-label">Beygir Gücü (HP)</label><input class="form-input" id="sp_hp" placeholder="380"/></div>
+            <div class="form-group"><label class="form-label">Vites Sayısı</label><input class="form-input" id="sp_gears" placeholder="8"/></div>
+            <div class="form-group" id="cabinTypeGroup"><label class="form-label">Kabin Tipi</label>
+              <select class="form-input form-select" id="sp_cabin">
+                <option value="">Seçiniz</option>
+                <option value="Çift Kabin">Çift Kabin</option>
+                <option value="Tek Kabin">Tek Kabin</option>
+                <option value="Uzatılmış Kabin">Uzatılmış Kabin</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Lastik Ebatı</label><input class="form-input" id="sp_tire" placeholder="315/80 R22.5"/></div>
+            <div class="form-group"><label class="form-label">Son Lastik Değişimi</label><input class="form-input" id="sp_tirechange" type="date"/></div>
+          </div>
+          <div class="spec-section-title">💧 Yangın Söndürme Sistemi</div>
+          <div class="spec-grid">
+            <div class="form-group"><label class="form-label">Su Tankı (litre)</label><input class="form-input" id="sp_watertank" placeholder="5000"/></div>
+            <div class="form-group"><label class="form-label">Köpük Tankı (litre)</label><input class="form-input" id="sp_foamtank" placeholder="500"/></div>
+            <div class="form-group"><label class="form-label">KKT Tozu (kg)</label><input class="form-input" id="sp_powder" placeholder="250"/></div>
+            <div class="form-group"><label class="form-label">Pompa Markası</label><input class="form-input" id="sp_pump" placeholder="Rosenbauer"/></div>
+            <div class="form-group"><label class="form-label">Pompa Kapasitesi (l/dk)</label><input class="form-input" id="sp_pumpcap" placeholder="3000"/></div>
+          </div>
+          <div class="spec-section-title">🔝 Merdiven / Sepet</div>
+          <div class="spec-grid">
+            <div class="form-group"><label class="form-label">Merdiven Uzunluğu (m)</label><input class="form-input" id="sp_ladderlength" placeholder="32"/></div>
+            <div class="form-group"><label class="form-label">Sepet Kapasitesi (kg)</label><input class="form-input" id="sp_basketcap" placeholder="270"/></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Fotoğraf -->
+      <div class="tab-pane" id="vt-photo">
+        <div class="section-title">📷 Araç Fotoğrafı</div>
+        <div id="photoPlaceholderArea" class="photo-placeholder" onclick="document.getElementById('vehiclePhotoInput').click()">
+          <span style="font-size:3rem;">📷</span>
+          <span>Fotoğraf yüklemek için tıklayın</span>
+          <span style="font-size:.78rem;color:var(--text-dim);">JPG / PNG – Ana sayfadaki kart fotoğrafı olarak kullanılır</span>
+        </div>
+        <img id="photoPreviewImg" class="photo-preview" style="display:none;" src="" alt="Araç Fotoğrafı"/>
+        <input type="file" id="vehiclePhotoInput" style="display:none;" accept="image/jpeg,image/png,image/webp" onchange="handlePhotoUpload(event)"/>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+          <button id="photoUploadBtn" class="btn-add" onclick="document.getElementById('vehiclePhotoInput').click()">📷 Fotoğraf Yükle / Değiştir</button>
+          <button id="photoDeleteBtn" class="btn-del" onclick="deletePhoto()" style="display:none;">🗑 Fotoğrafı Kaldır</button>
+        </div>
+        <p style="margin-top:14px;font-size:.8rem;color:var(--text-dim);">Yüklenen fotoğraf araç kartında görüntülenir.</p>
+      </div>
+
+      <!-- TAB: Arıza Geçmişi -->
+      <div class="tab-pane" id="vt-fault">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div class="section-title">🔧 Arıza Kayıtları</div>
+          <button class="btn-add" id="addFaultBtn" onclick="openAddFault()">+ Arıza Ekle</button>
+        </div>
+        <div id="faultList"></div>
+      </div>
+
+      <!-- TAB: Notlar -->
+      <div class="tab-pane" id="vt-notes">
+        <div class="section-title">📝 Araç Notları</div>
+        <div id="noteInputArea">
+          <textarea class="form-input" id="noteTextInput" placeholder="Not yazın…" style="min-height:80px;margin-bottom:10px;"></textarea>
+          <button class="btn-save" onclick="addNote()" style="margin-bottom:16px;">💾 Notu Kaydet</button>
+        </div>
+        <div id="notesList"></div>
+      </div>
+
+      <!-- TAB: İstatistikler -->
+      <div class="tab-pane" id="vt-stats">
+        <div class="section-title">📊 Arıza İstatistikleri</div>
+        <div class="chart-container" style="margin-bottom:16px;">
+          <canvas id="faultChart" height="220"></canvas>
+        </div>
+        <div id="statsGrid" class="info-grid"></div>
+      </div>
+
+      <!-- TAB: İstasyon Geçmişi -->
+      <div class="tab-pane" id="vt-station">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div class="section-title">🏢 İstasyon Hareketleri</div>
+          <button class="btn-add" id="addStationBtn" onclick="openAddStation()">+ Hareket Ekle</button>
+        </div>
+        <div id="stationTimeline" class="timeline"></div>
+      </div>
+
+      <!-- TAB: Resmi Evraklar -->
+      <div class="tab-pane" id="vt-docs">
+        <div class="section-title">📄 Sigorta / Kasko / Muayene</div>
+        <div class="info-grid" id="docsInfoGrid" style="margin-bottom:20px;"></div>
+        <hr class="divider"/>
+        <div style="margin-bottom:12px;">
+          <div class="section-title" style="margin-bottom:0;">📎 Eklenen Evraklar</div>
+        </div>
+        <div id="docFileList" style="margin-top:8px;"></div>
+      </div>
+
+      <!-- TAB: Dosyalar -->
+      <div class="tab-pane" id="vt-files">
+        <div class="section-title">📎 Dosya Yükle</div>
+        <div id="addFileArea" class="upload-area" onclick="document.getElementById('fileUploadInput').click()">
+          <div style="font-size:2rem;">📁</div>
+          <p>Dosya yüklemek için tıklayın veya sürükleyin<br/><span style="font-size:.75rem;color:var(--text-dim);">(PDF, PNG, JPG, DOC)</span></p>
+        </div>
+        <input type="file" id="fileUploadInput" style="display:none;" multiple accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" onchange="handleFileUpload(event)"/>
+        <p style="margin-top:12px;font-size:.8rem;color:var(--text-dim);">Yüklenen dosyalar Evraklar sekmesinde görüntülenir.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ ADD FAULT MODAL ════════ -->
+<div class="modal-overlay hidden" id="faultModal">
+  <div class="modal-box" style="max-width:520px;">
+    <div class="modal-header">
+      <div class="modal-title">🔧 Arıza Kaydı Ekle</div>
+      <div class="modal-close" onclick="closeModal('faultModal')">✕</div>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="f_editId"/>
+      <div class="form-row">
+        <div><label class="form-label">Arıza Tarihi</label><input class="form-input" id="f_date" type="date"/></div>
+        <div><label class="form-label">Arıza Kategorisi</label>
+          <select class="form-input form-select" id="f_cat">
+            <option>Motor</option><option>Şanzıman</option><option>Araç Yürüyeni</option>
+            <option>Üst Yapı</option><option>Fren</option><option>Elektrik</option>
+            <option>Kaporta</option><option>Hidrolik</option><option>Pompa Sistemi</option>
+            <option>Lastik</option><option>Soğutma</option><option>Diğer</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Arıza Açıklaması</label><textarea class="form-input" id="f_desc" placeholder="Arıza detayları..."></textarea></div>
+      <div class="form-row">
+        <div><label class="form-label">Gittiği Servis</label><input class="form-input" id="f_service" placeholder="Servis adı"/></div>
+        <div><label class="form-label">Servis Tarihi</label><input class="form-input" id="f_servicedate" type="date"/></div>
+      </div>
+      <div class="form-row">
+        <div><label class="form-label">Tamir Bitiş Tarihi</label><input class="form-input" id="f_fixdate" type="date"/></div>
+        <div><label class="form-label">Tamir Ücreti (₺)</label><input class="form-input" id="f_cost" type="number" placeholder="0"/></div>
+      </div>
+      <div class="form-group"><label class="form-label">Durum</label>
+        <select class="form-input form-select" id="f_status">
+          <option value="devam">Devam Ediyor</option><option value="tamamlandi">Tamamlandı</option>
+        </select>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+        <button class="btn-sm btn-outline" onclick="closeModal('faultModal')">İptal</button>
+        <button class="btn-save" onclick="saveFault()">Kaydet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ ADD STATION MODAL ════════ -->
+<div class="modal-overlay hidden" id="stationModal">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="modal-header">
+      <div class="modal-title">🏢 İstasyon Hareketi Ekle</div>
+      <div class="modal-close" onclick="closeModal('stationModal')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div><label class="form-label">Hareket Tarihi</label><input class="form-input" id="st_date" type="date"/></div>
+        <div><label class="form-label">Hareket Türü</label>
+          <select class="form-input form-select" id="st_type">
+            <option value="kalici">Kalıcı Görev</option><option value="gecici">Geçici Görev</option><option value="donus">Dönüş</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">İstasyon Adı</label><input class="form-input" id="st_station" placeholder="İstasyon adı"/></div>
+      <div class="form-group"><label class="form-label">Açıklama</label><textarea class="form-input" id="st_notes" placeholder="Notlar..."></textarea></div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+        <button class="btn-sm btn-outline" onclick="closeModal('stationModal')">İptal</button>
+        <button class="btn-save" onclick="saveStation()">Kaydet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ ADD SERVICE MODAL ════════ -->
+<div class="modal-overlay hidden" id="serviceModal">
+  <div class="modal-box" style="max-width:500px;">
+    <div class="modal-header">
+      <div class="modal-title">🛠 Servis Kaydı Ekle</div>
+      <div class="modal-close" onclick="closeModal('serviceModal')">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div><label class="form-label">Servis Tarihi</label><input class="form-input" id="sv_date" type="date"/></div>
+        <div><label class="form-label">Servis Türü</label>
+          <select class="form-input form-select" id="sv_type">
+            <option>Periyodik Bakım</option><option>Muayene</option><option>Sigorta Yenileme</option><option>Kasko Yenileme</option><option>Tamir</option><option>Diğer</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Servis Firması</label><input class="form-input" id="sv_firm" placeholder="Servis adı"/></div>
+      <div class="form-group"><label class="form-label">Yapılan İşlemler</label><textarea class="form-input" id="sv_desc" placeholder="Detaylar..."></textarea></div>
+      <div class="form-row">
+        <div><label class="form-label">Ücret (₺)</label><input class="form-input" id="sv_cost" type="number" placeholder="0"/></div>
+        <div><label class="form-label">Sonraki Servis Tarihi</label><input class="form-input" id="sv_next" type="date"/></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+        <button class="btn-sm btn-outline" onclick="closeModal('serviceModal')">İptal</button>
+        <button class="btn-save" onclick="saveService()">Kaydet</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ ADMIN PANEL ════════ -->
+<div class="modal-overlay hidden" id="adminModal">
+  <div class="modal-box" style="max-width:900px;">
+    <div class="modal-header">
+      <div class="modal-title">⚙ Admin Paneli</div>
+      <div class="modal-close" onclick="closeModal('adminModal')">✕</div>
+    </div>
+    <div class="modal-tabs" id="adminTabBtns" style="display:flex;gap:4px;padding:14px 24px 0;border-bottom:1px solid var(--border);overflow-x:auto;">
+      <button class="modal-tab active" onclick="switchAdminTab('at-users',this)">👤 Kullanıcılar</button>
+      <button class="modal-tab" onclick="switchAdminTab('at-pool',this)">🚒 Araç Havuzu</button>
+      <button class="modal-tab" onclick="switchAdminTab('at-system',this)">🗄 Sistem</button>
+    </div>
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto;">
+
+      <!-- TAB: Kullanıcılar -->
+      <div class="tab-pane active" id="at-users">
+        <div class="admin-card">
+          <div class="admin-card-title">👤 Kullanıcı Yönetimi</div>
+          <table class="data-table" id="userTable">
+            <thead><tr><th>Kullanıcı Adı</th><th>Ad Soyad</th><th>Rol</th><th>İşlem</th></tr></thead>
+            <tbody id="userTableBody"></tbody>
+          </table>
+          <hr class="divider"/>
+          <div class="admin-card-title">➕ Yeni Kullanıcı</div>
+          <div class="form-row three">
+            <div><label class="form-label">Kullanıcı Adı</label><input class="form-input" id="nu_username" placeholder="kullanici"/></div>
+            <div><label class="form-label">Ad Soyad</label><input class="form-input" id="nu_name" placeholder="Ad Soyad"/></div>
+            <div><label class="form-label">Şifre</label><input class="form-input" id="nu_pass" type="password" placeholder="••••••"/></div>
+          </div>
+          <div class="form-row">
+            <div><label class="form-label">Rol</label>
+              <select class="form-input form-select" id="nu_role">
+                <option value="admin">Admin</option><option value="editor">Editör</option><option value="viewer">İzleyici</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:flex-end;">
+              <button class="btn-save" style="width:100%;" onclick="addUser()">Kullanıcı Ekle</button>
+            </div>
+          </div>
+        </div>
+        <div class="admin-card" id="editUserCard" style="display:none;">
+          <div class="admin-card-title">✏ Kullanıcıyı Düzenle</div>
+          <input type="hidden" id="eu_id"/>
+          <div class="form-row three">
+            <div><label class="form-label">Kullanıcı Adı</label><input class="form-input" id="eu_username" placeholder="kullanici"/></div>
+            <div><label class="form-label">Ad Soyad</label><input class="form-input" id="eu_name" placeholder="Ad Soyad"/></div>
+            <div><label class="form-label">Yeni Şifre <span style="color:var(--text-dim);font-weight:400;">(boş=değiştirme)</span></label><input class="form-input" id="eu_pass" type="password" placeholder="••••••"/></div>
+          </div>
+          <div class="form-row">
+            <div><label class="form-label">Rol</label>
+              <select class="form-input form-select" id="eu_role">
+                <option value="admin">Admin</option><option value="editor">Editör</option><option value="viewer">İzleyici</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:8px;">
+              <button class="btn-save" style="flex:1;" onclick="saveEditUser()">💾 Kaydet</button>
+              <button class="btn-sm btn-outline" onclick="document.getElementById('editUserCard').style.display='none'">İptal</button>
+            </div>
+          </div>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-title">🔐 Şifremi Değiştir</div>
+          <div class="form-row three">
+            <div><label class="form-label">Mevcut Şifre</label><input class="form-input" id="cp_old" type="password" placeholder="••••••"/></div>
+            <div><label class="form-label">Yeni Şifre</label><input class="form-input" id="cp_new" type="password" placeholder="••••••"/></div>
+            <div><label class="form-label">Tekrar</label><input class="form-input" id="cp_new2" type="password" placeholder="••••••"/></div>
+          </div>
+          <button class="btn-save" onclick="changeAdminPassword()">🔐 Şifreyi Güncelle</button>
+        </div>
+      </div>
+
+      <!-- TAB: Araç Havuzu -->
+      <div class="tab-pane" id="at-pool">
+        <div class="admin-card">
+          <div class="admin-card-title" style="justify-content:space-between;">
+            🚒 Araç Havuzu
+            <button class="btn-add" onclick="openAddPool()">+ Yeni Ekle</button>
+          </div>
+          <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px;">Havuza eklediğiniz marka/model bilgileri, araç eklerken otomatik olarak dolar. Fotoğraf bir kez yüklenir, tüm aynı araçlar paylaşır.</p>
+          <div id="poolList"></div>
+        </div>
+        <!-- Havuz Ekleme/Düzenleme Formu -->
+        <div class="admin-card" id="poolFormCard" style="display:none;">
+          <div class="admin-card-title" id="poolFormTitle">➕ Yeni Araç Tipi Ekle</div>
+          <input type="hidden" id="pool_id"/>
+
+          <!-- Temel Bilgiler -->
+          <div style="font-family:'Rajdhani',sans-serif;font-size:.85rem;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);">📋 Temel Bilgiler</div>
+          <div class="form-row three">
+            <div><label class="form-label">Marka</label><input class="form-input" id="pool_brand" placeholder="Mercedes" oninput="poolBrandInput()"/></div>
+            <div><label class="form-label">Model</label><input class="form-input" id="pool_model" placeholder="Atego 1530"/></div>
+            <div><label class="form-label">Araç Tipi</label>
+              <select class="form-input form-select" id="pool_type">
+                <option>Arazöz</option><option>Tanker</option><option>Merdiven</option>
+                <option>Kurtarma</option><option>Şnorkel</option><option>Hizmet</option>
+                <option>Sivil</option><option>Su Tankeri</option><option>Ambulans</option>
+                <option>Komuta Aracı</option><option>KBRN Aracı</option><option>Lojistik</option><option>Diğer</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Boyut & Ağırlık -->
+          <div style="font-family:'Rajdhani',sans-serif;font-size:.85rem;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border);">📐 Boyut &amp; Ağırlık</div>
+          <div class="spec-grid">
+            <div class="form-group"><label class="form-label">Uzunluk (mm)</label><input class="form-input" id="pool_length" placeholder="7500"/></div>
+            <div class="form-group"><label class="form-label">Genişlik (mm)</label><input class="form-input" id="pool_width" placeholder="2500"/></div>
+            <div class="form-group"><label class="form-label">Yerden Yükseklik (mm)</label><input class="form-input" id="pool_height" placeholder="3200"/></div>
+            <div class="form-group"><label class="form-label">Araç Ağırlığı (ton)</label><input class="form-input" id="pool_weight" placeholder="12"/></div>
+            <div class="form-group"><label class="form-label">Destek Ayak Genişliği (mm)</label><input class="form-input" id="pool_outrigger" placeholder="4800"/></div>
+          </div>
+
+          <!-- Motor & Şanzıman -->
+          <div style="font-family:'Rajdhani',sans-serif;font-size:.85rem;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border);">🚗 Motor &amp; Şanzıman</div>
+          <div class="spec-grid">
+            <div class="form-group"><label class="form-label">Motor No / Kodu</label><input class="form-input" id="pool_engine" placeholder="OM936LA"/></div>
+            <div class="form-group"><label class="form-label">Beygir Gücü (HP)</label><input class="form-input" id="pool_hp" placeholder="220"/></div>
+            <div class="form-group"><label class="form-label">Vites Sayısı</label><input class="form-input" id="pool_gears" placeholder="6"/></div>
+            <div class="form-group"><label class="form-label">Kabin Tipi</label>
+              <select class="form-input form-select" id="pool_cabin">
+                <option value="">Seçiniz</option>
+                <option value="Çift Kabin">Çift Kabin</option>
+                <option value="Tek Kabin">Tek Kabin</option>
+                <option value="Uzatılmış Kabin">Uzatılmış Kabin</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Lastik Ebatı</label><input class="form-input" id="pool_tire" placeholder="315/80 R22.5"/></div>
+          </div>
+
+          <!-- Yangın Söndürme -->
+          <div style="font-family:'Rajdhani',sans-serif;font-size:.85rem;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border);">💧 Yangın Söndürme Sistemi</div>
+          <div class="spec-grid">
+            <div class="form-group"><label class="form-label">Su Tankı (L)</label><input class="form-input" id="pool_watertank" placeholder="3000"/></div>
+            <div class="form-group"><label class="form-label">Köpük Tankı (L)</label><input class="form-input" id="pool_foamtank" placeholder="300"/></div>
+            <div class="form-group"><label class="form-label">KKT Tozu (kg)</label><input class="form-input" id="pool_powder" placeholder="250"/></div>
+            <div class="form-group"><label class="form-label">Pompa Markası</label><input class="form-input" id="pool_pump" placeholder="Rosenbauer"/></div>
+            <div class="form-group"><label class="form-label">Pompa Kapasitesi (L/dk)</label><input class="form-input" id="pool_pumpcap" placeholder="2000"/></div>
+          </div>
+
+          <!-- Merdiven / Sepet -->
+          <div style="font-family:'Rajdhani',sans-serif;font-size:.85rem;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border);">🔝 Merdiven / Sepet</div>
+          <div class="spec-grid">
+            <div class="form-group"><label class="form-label">Merdiven Uzunluğu (m)</label><input class="form-input" id="pool_ladderlength" placeholder="32"/></div>
+            <div class="form-group"><label class="form-label">Sepet Kapasitesi (kg)</label><input class="form-input" id="pool_basketcap" placeholder="270"/></div>
+          </div>
+
+          <div class="form-group" style="margin-top:8px;">
+            <label class="form-label">Açıklama / Notlar</label>
+            <textarea class="form-input" id="pool_notes" rows="2" placeholder="Bu model hakkında genel notlar..."></textarea>
+          </div>
+          <!-- Fotoğraf -->
+          <div class="form-group">
+            <label class="form-label">Araç Fotoğrafı</label>
+            <div id="poolPhotoPreviewWrap" style="display:none;margin-bottom:10px;">
+              <img id="poolPhotoPreview" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;"/>
+              <button class="btn-del" style="margin-top:6px;" onclick="clearPoolPhoto()">🗑 Fotoğrafı Kaldır</button>
+            </div>
+            <div id="poolPhotoPlaceholder" class="upload-area" onclick="document.getElementById('poolPhotoInput').click()">
+              <div style="font-size:2rem;">📷</div>
+              <p>Fotoğraf yüklemek için tıklayın</p>
+            </div>
+            <input type="file" id="poolPhotoInput" accept="image/*" style="display:none;" onchange="handlePoolPhoto(event)"/>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <button class="btn-save" onclick="savePool()">💾 Kaydet</button>
+            <button class="btn-sm btn-outline" onclick="document.getElementById('poolFormCard').style.display='none'">İptal</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Sistem -->
+      <div class="tab-pane" id="at-system">
+        <div class="admin-card">
+          <div class="admin-card-title">🗄 Sistem İşlemleri</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-sm btn-primary-sm" onclick="exportData()">📤 Tüm Veriyi Dışa Aktar</button>
+            <button class="btn-sm btn-warn-sm" onclick="document.getElementById('importFile').click()">📥 Veri Yükle</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script type="module">
+// ════════════════════════════════════════════
+//  SUPABASE CONFIG
+// ════════════════════════════════════════════
+const SUPA_URL = 'https://njcwoxxjipdelytqndsz.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qY3dveHhqaXBkZWx5dHFuZHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NDI0NTgsImV4cCI6MjA5MjAxODQ1OH0.mJxYyA4UoTpWl8XHPSX4z48bfWI9sTSpJDSHWzJrWkA';
+const DB_KEY   = 'maindb';
+const SESSION_KEY = 'ank_ift_session';
+
+// Bellek içi cache — senkron erişim için
+let _dbCache = null;
+
+
+// ── Fotoğraf sıkıştırma: base64 → canvas → küçültülmüş base64 ──
+function compressPhoto(base64, maxW=800, quality=0.75){
+  return new Promise(resolve=>{
+    if(!base64 || !base64.startsWith('data:image')) { resolve(base64); return; }
+    const img = new Image();
+    img.onload = ()=>{
+      let w=img.width, h=img.height;
+      if(w>maxW){ h=Math.round(h*maxW/w); w=maxW; }
+      const canvas=document.createElement('canvas');
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = ()=>resolve(base64);
+    img.src = base64;
+  });
+}
+
+async function getDB(){
+  if(_dbCache) return _dbCache;
+  try{
+    const res = await fetch(`${SUPA_URL}/rest/v1/data?key=eq.${DB_KEY}&select=value`, {
+      headers:{ apikey: SUPA_KEY, Authorization: 'Bearer '+SUPA_KEY }
+    });
+    const rows = await res.json();
+    if(rows && rows.length > 0){
+      _dbCache = JSON.parse(rows[0].value);
+      return _dbCache;
+    }
+  } catch(e){ console.error('Supabase okuma hatası',e); }
+  // İlk kurulum — boş DB oluştur
+  const fresh = initDB();
+  await saveDB(fresh);
+  return fresh;
+}
+
+let _saveTimer = null;
+let _pendingSave = null;
+
+async function saveDB(db){
+  _dbCache = db;
+  _pendingSave = db;
+  // Debounce: 400ms içinde birden fazla kayıt isteği gelirse sadece son olanı gönder
+  if(_saveTimer) clearTimeout(_saveTimer);
+  return new Promise(resolve=>{
+    _saveTimer = setTimeout(async()=>{
+      await _flushDB(_pendingSave);
+      resolve();
+    }, 400);
+  });
+}
+
+async function _flushDB(db){
+  // ── Boyut optimizasyonu 1: havuz fotoğrafını araçta tekrar saklamaz ──
+  const poolMap = {};
+  (db.vehiclePool||[]).forEach(p=>{ if(p.photo) poolMap[p.id]=p.photo; });
+  const slimVehicles = (db.vehicles||[]).map(v=>{
+    if(v.poolRef && poolMap[v.poolRef] && v.photo === poolMap[v.poolRef]){
+      const slim = Object.assign({},v);
+      slim.photo = '';
+      return slim;
+    }
+    return v;
+  });
+  const slimDB = Object.assign({}, db, { vehicles: slimVehicles });
+  const val = JSON.stringify(slimDB);
+  try{
+    await fetch(`${SUPA_URL}/rest/v1/data`, {
+      method: 'POST',
+      headers:{
+        apikey: SUPA_KEY,
+        Authorization: 'Bearer '+SUPA_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({ key: DB_KEY, value: val })
+    });
+  } catch(e){ console.error('Supabase yazma hatası',e); }
+}
+
+// Araç fotoğrafını döndürür — önce kendi fotoğrafına, sonra havuza bakar
+function getVehiclePhoto(v, db){
+  if(v.photo) return v.photo;
+  if(v.poolRef && db){
+    const p = (db.vehiclePool||[]).find(x=>x.id===v.poolRef);
+    if(p && p.photo) return p.photo;
+  }
+  return '';
+}
+
+// ════════════════════════════════════════════
+//  INITIAL DATA
+// ════════════════════════════════════════════
+
+function initDB(){
+  return {
+    users:[
+      {id:'u1',username:'admin',password:'admin123',name:'Sistem Yöneticisi',role:'admin'},
+      {id:'u2',username:'editor',password:'editor123',name:'Editör Kullanıcı',role:'editor'},
+      {id:'u3',username:'viewer',password:'viewer123',name:'İzleyici',role:'viewer'}
+    ],
+    vehicles: sampleVehicles(),
+    nextVehicleId: 20,
+    vehiclePool: []
+  };
+}
+
+function sampleVehicles(){
+  const today = new Date();
+  const fmt = (d)=>d.toISOString().split('T')[0];
+  const addDays = (n)=>{const d=new Date();d.setDate(d.getDate()+n);return fmt(d);};
+  return [
+    {id:'v1',plate:'06 AE 1234',type:'Tanker',brand:'Mercedes',model:'Actros 2540',year:2019,chassis:'WDB9634031L285441',engine:'OM471.909',km:187450,region:'1',status:'faal',station:'Etimesgut İtfaiye İstasyonu',tempstation:'',insurance:addDays(15),kasko:addDays(45),inspection:addDays(-5),notes:'',notesList:[{id:'n1',text:'Ana hatta görevli.',date:'2024-01-15',user:'admin'}],specs:{length:'9400',width:'2550',height:'3300',weight:'18',outrigger:'',hp:'380',gears:'8',cabin:'Çift Kabin',tire:'315/80 R22.5',tirechange:'',watertank:'5000',foamtank:'500',powder:'',pump:'Rosenbauer',pumpcap:'3000',ladderlength:'',basketcap:''},photo:'',faults:[{id:'f1',date:'2024-03-10',cat:'Pompa Sistemi',desc:'Su pompasında sızıntı tespit edildi.',service:'Başkent Servis',servicedate:'2024-03-12',fixdate:'2024-03-15',cost:4800,status:'tamamlandi',logUser:'admin',logDate:'2024-03-10'}],stationHistory:[{id:'sh1',date:'2022-01-10',type:'kalici',station:'Etimesgut İtfaiye İstasyonu',notes:'İlk atama.',logUser:'admin',logDate:'2022-01-10'},{id:'sh2',date:'2023-06-01',type:'gecici',station:'Sincan İtfaiye İstasyonu',notes:'Tatil takviyesi.',logUser:'admin',logDate:'2023-06-01'},{id:'sh3',date:'2023-06-25',type:'donus',station:'Etimesgut İtfaiye İstasyonu',notes:'Geçici görev sona erdi.',logUser:'admin',logDate:'2023-06-25'}],services:[{id:'sv1',date:'2024-01-15',type:'Periyodik Bakım',firm:'Mercedes Yetkili Servis',desc:'Yağ, filtre, fren pedi değişimi.',cost:12500,next:addDays(180),logUser:'admin',logDate:'2024-01-15'}],docs:[],files:[],logUser:'admin',logDate:'2024-01-15'},
+    {id:'v2',plate:'06 BK 5678',type:'Merdiven',brand:'Iveco',model:'Magirus DLK 32',year:2021,chassis:'ZCFC4EHH0L0001234',engine:'F3BE0684',km:62300,region:'1',status:'arizali',station:'Mamak İtfaiye İstasyonu',tempstation:'',insurance:addDays(90),kasko:addDays(120),inspection:addDays(200),notes:'',notesList:[{id:'n2',text:'Merdivenli araç, yüksek bina müdahalesi.',date:'2021-03-20',user:'admin'}],specs:{length:'12000',width:'2550',height:'3600',weight:'26',outrigger:'6200',hp:'420',gears:'12',cabin:'Tek Kabin',tire:'315/80 R22.5',tirechange:'',watertank:'2000',foamtank:'200',powder:'',pump:'',pumpcap:'',ladderlength:'32',basketcap:'270'},photo:'',faults:[{id:'f2',date:'2025-04-01',cat:'Hidrolik',desc:'Merdiven hidrolik sisteminde basınç düşüşü var.',service:'İveco Servis',servicedate:'2025-04-03',fixdate:'',cost:0,status:'devam',logUser:'editor',logDate:'2025-04-01'}],stationHistory:[{id:'sh4',date:'2021-03-20',type:'kalici',station:'Mamak İtfaiye İstasyonu',notes:'İlk atama.',logUser:'admin',logDate:'2021-03-20'}],services:[],docs:[],files:[],logUser:'editor',logDate:'2025-04-01'},
+    {id:'v3',plate:'06 CM 9012',type:'Su Tankeri',brand:'MAN',model:'TGS 26.440',year:2018,chassis:'WMA26XZZ0JM123456',engine:'D2676LF51',km:234100,region:'2',status:'bakim',station:'Çankaya İtfaiye İstasyonu',tempstation:'',insurance:addDays(25),kasko:addDays(60),inspection:addDays(10),notes:'',notesList:[],specs:{},photo:'',faults:[],stationHistory:[{id:'sh5',date:'2018-09-01',type:'kalici',station:'Çankaya İtfaiye İstasyonu',notes:'İlk atama.',logUser:'admin',logDate:'2018-09-01'}],services:[{id:'sv2',date:fmt(today),type:'Periyodik Bakım',firm:'MAN Türkiye Servis',desc:'50.000km bakım paketi uygulandı.',cost:18000,next:addDays(365),logUser:'editor',logDate:fmt(today)}],docs:[],files:[],logUser:'editor',logDate:fmt(today)},
+    {id:'v4',plate:'06 DF 3456',type:'KBRN Aracı',brand:'Mercedes',model:'Atego 1224',year:2022,chassis:'WDB9500041L456789',engine:'OM926.952',km:28900,region:'2',status:'faal',station:'Altındağ İtfaiye İstasyonu',tempstation:'',insurance:addDays(180),kasko:addDays(200),inspection:addDays(300),notes:'',notesList:[],specs:{},photo:'',faults:[],stationHistory:[{id:'sh6',date:'2022-07-15',type:'kalici',station:'Altındağ İtfaiye İstasyonu',notes:'Yeni alım, ilk atama.',logUser:'admin',logDate:'2022-07-15'}],services:[],docs:[],files:[],logUser:'admin',logDate:'2022-07-15'},
+    {id:'v5',plate:'06 EG 7890',type:'Komuta Aracı',brand:'Toyota',model:'Land Cruiser 300',year:2023,chassis:'JTMHX3FJ0P4001234',engine:'1GR-FE',km:14200,region:'3',status:'faal',station:'Yenimahalle İtfaiye İstasyonu',tempstation:'',insurance:addDays(250),kasko:addDays(280),inspection:addDays(350),notes:'',notesList:[],specs:{},photo:'',faults:[],stationHistory:[{id:'sh7',date:'2023-02-01',type:'kalici',station:'Yenimahalle İtfaiye İstasyonu',notes:'İlk atama.',logUser:'admin',logDate:'2023-02-01'}],services:[],docs:[],files:[],logUser:'admin',logDate:'2023-02-01'},
+    {id:'v6',plate:'06 FH 2345',type:'Tanker',brand:'Volvo',model:'FH 460',year:2020,chassis:'YV2R0A9A7LA123456',engine:'D13K460',km:156800,region:'3',status:'faal',station:'Keçiören İtfaiye İstasyonu',tempstation:'Sincan İtfaiye İstasyonu',insurance:addDays(5),kasko:addDays(30),inspection:addDays(120),notes:'',notesList:[],specs:{},photo:'',faults:[{id:'f3',date:'2024-11-20',cat:'Lastik',desc:'Arka aks lastik patlaması.',service:'Lastik Merkezi',servicedate:'2024-11-20',fixdate:'2024-11-21',cost:3200,status:'tamamlandi',logUser:'editor',logDate:'2024-11-20'}],stationHistory:[{id:'sh8',date:'2020-06-10',type:'kalici',station:'Keçiören İtfaiye İstasyonu',notes:'İlk atama.',logUser:'admin',logDate:'2020-06-10'},{id:'sh9',date:'2025-03-15',type:'gecici',station:'Sincan İtfaiye İstasyonu',notes:'Araç eksikliği nedeniyle geçici görev.',logUser:'editor',logDate:'2025-03-15'}],services:[],docs:[],files:[],logUser:'editor',logDate:'2025-03-15'},
+  ];
+}
+
+// ════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════
+let currentUser = null;
+let currentVehicleId = null;
+let currentRegion = 'all';
+let faultChart = null;
+
+async function doLogin(){
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value.trim();
+  // Yükleniyor göstergesi
+  const btn = document.querySelector('#loginScreen .btn-fire');
+  btn.textContent='Bağlanıyor...'; btn.disabled=true;
+  const db = await getDB();
+  btn.textContent='GİRİŞ YAP'; btn.disabled=false;
+  const user = db.users.find(x=>x.username===u && x.password===p);
+  if(!user){
+    document.getElementById('loginError').style.display='block';
+    return;
+  }
+  currentUser = user;
+  localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appBar').style.display='block';
+  document.getElementById('appRoot').style.display='block';
+  setupUI();
+  await renderAll();
+}
+
+function doLogout(){
+  currentUser=null;
+  localStorage.removeItem(SESSION_KEY);
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('appBar').style.display='none';
+  document.getElementById('appRoot').style.display='none';
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginError').style.display='none';
+}
+
+function setupUI(){
+  // User chip
+  const roleColors={admin:'admin',editor:'editor',viewer:'viewer'};
+  const roleNames={admin:'Admin',editor:'Editör',viewer:'İzleyici'};
+  document.getElementById('userChip').innerHTML=`<span class="role-dot ${roleColors[currentUser.role]}"></span>${currentUser.name} <span style="opacity:.5">·</span> ${roleNames[currentUser.role]}`;
+  // Admin btn
+  document.getElementById('adminBtn').style.display = currentUser.role==='admin'?'':'none';
+  // FAB
+  document.getElementById('fabBtn').style.display = currentUser.role==='admin'?'flex':'none';
+  // Yedekle / Yükle - sadece admin
+  document.getElementById('backupBtn').style.display = currentUser.role==='admin'?'':'none';
+  document.getElementById('restoreBtn').style.display = currentUser.role==='admin'?'':'none';
+}
+
+// ════════════════════════════════════════════
+//  FUZZY SEARCH (tolerates typos, case, Turkish chars)
+// ════════════════════════════════════════════
+function normalize(str){
+  return (str||'').toLowerCase()
+    .replace(/ı/g,'i').replace(/ğ/g,'g').replace(/ü/g,'u')
+    .replace(/ş/g,'s').replace(/ö/g,'o').replace(/ç/g,'c')
+    .replace(/İ/g,'i').replace(/Ğ/g,'g').replace(/Ü/g,'u')
+    .replace(/Ş/g,'s').replace(/Ö/g,'o').replace(/Ç/g,'c');
+}
+
+function fuzzyMatch(text, query){
+  if(!query) return true;
+  const t = normalize(text);
+  const q = normalize(query);
+  // exact substring
+  if(t.includes(q)) return true;
+  // allow 1 char difference for queries > 3 chars
+  if(q.length > 3){
+    for(let i=0;i<=t.length-q.length+1;i++){
+      let diff=0;
+      for(let j=0;j<q.length;j++){
+        if(t[i+j]!==q[j]) diff++;
+        if(diff>1) break;
+      }
+      if(diff<=1) return true;
+    }
+  }
+  return false;
+}
+
+function vehicleMatchesSearch(v, query){
+  if(!query) return true;
+  return fuzzyMatch(v.plate,query)||fuzzyMatch(v.type,query)||fuzzyMatch(v.brand,query)||
+    fuzzyMatch(v.model,query)||fuzzyMatch(v.station,query)||fuzzyMatch(v.tempstation,query)||
+    fuzzyMatch(v.status,query);
+}
+
+// ════════════════════════════════════════════
+//  RENDER
+// ════════════════════════════════════════════
+async function renderAll(){
+  const db = await getDB(); // _dbCache varsa anında döner
+  renderStats(db);
+  renderAlerts(db);
+  await renderVehicles(db);
+}
+
+function renderStats(db){
+  const total = db.vehicles.length;
+  const faal = db.vehicles.filter(v=>v.status==='faal').length;
+  const arizali = db.vehicles.filter(v=>v.status==='arizali').length;
+  const bakim = db.vehicles.filter(v=>v.status==='bakim').length;
+  document.getElementById('statCards').innerHTML=`
+    <div class="stat-card"><div class="stat-num" style="color:#e8eaed">${total}</div><div class="stat-lbl">Toplam Araç</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${faal}</div><div class="stat-lbl">Faal</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--red)">${arizali}</div><div class="stat-lbl">Arızalı</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--yellow)">${bakim}</div><div class="stat-lbl">Bakımda</div></div>
+  `;
+}
+
+function renderAlerts(db){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const items = [];
+  db.vehicles.forEach(v=>{
+    const checks=[
+      {label:'Sigorta',date:v.insurance,plate:v.plate},
+      {label:'Kasko',date:v.kasko,plate:v.plate},
+      {label:'Muayene',date:v.inspection,plate:v.plate},
+    ];
+    checks.forEach(c=>{
+      if(!c.date) return;
+      const d = new Date(c.date); d.setHours(0,0,0,0);
+      const diff = Math.round((d-today)/(1000*60*60*24));
+      if(diff<0) items.push({...c,diff,overdue:true});
+      else if(diff<=30) items.push({...c,diff,overdue:false});
+    });
+  });
+  const panel = document.getElementById('alertPanel');
+  if(items.length===0){panel.style.display='none';return;}
+  panel.style.display='block';
+  document.getElementById('alertItems').innerHTML = items.map(i=>`
+    <div class="alert-item ${i.overdue?'overdue':'soon'}">
+      ${i.overdue?'🚨':'⚠'} <strong>${i.plate}</strong> — ${i.label}
+      ${i.overdue?`<span style="margin-left:4px;">${Math.abs(i.diff)} gün GEÇTI (${i.date})</span>`
+      :`<span style="margin-left:4px;">${i.diff} gün kaldı (${i.date})</span>`}
+    </div>
+  `).join('');
+}
+
+async function setRegion(r, el){
+  currentRegion = r;
+  document.querySelectorAll('.region-tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  else {
+    document.querySelectorAll('.region-tab').forEach(t=>{
+      if(t.dataset.region===r) t.classList.add('active');
+    });
+  }
+  const filterRegionEl = document.getElementById('filterRegion');
+  if(filterRegionEl) filterRegionEl.value = r;
+  await renderVehicles();
+}
+
+// ════════════════════════════════════════════
+//  SEARCH MODAL
+// ════════════════════════════════════════════
+function openSearchModal(){
+  document.getElementById('searchModal').classList.remove('hidden');
+}
+
+async function applySearchFilters(){
+  const query = (document.getElementById('searchInput').value||'').trim();
+  const status = document.getElementById('filterStatus').value||'';
+  const region = document.getElementById('filterRegion').value||'all';
+  currentRegion = region;
+  const parts=[];
+  if(query) parts.push(`"${query}"`);
+  if(status) parts.push({faal:'Faal',arizali:'Arızalı',bakim:'Bakımda'}[status]||status);
+  if(region!=='all') parts.push(`Bölge ${region}`);
+  const bar = document.getElementById('activeFiltersBar');
+  if(parts.length>0){
+    bar.style.display='flex';
+    document.getElementById('activeFilterText').textContent=parts.join(' · ');
+  } else {
+    bar.style.display='none';
+  }
+  await renderVehicles();
+}
+
+async function applySearchAndRender(){
+  const query = (document.getElementById('searchInput').value||'').trim();
+  const dd = document.getElementById('searchDropdown');
+  if(!query){dd.style.display='none'; await renderVehicles();return;}
+  const db = await getDB();
+  const matches = db.vehicles.filter(v=>vehicleMatchesSearch(v,query)).slice(0,8);
+  if(matches.length===0){
+    dd.style.display='block';
+    dd.innerHTML='<div style="padding:12px 16px;color:var(--text-muted);font-size:.85rem;">Eşleşen araç bulunamadı.</div>';
+  } else {
+    dd.style.display='block';
+    dd.innerHTML=matches.map(v=>`
+      <div onclick="document.getElementById('searchDropdown').style.display='none';openVehicle('${v.id}')" style="display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.04)'" onmouseout="this.style.background=''">
+        <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.95rem;color:#fff;">${v.plate}</span>
+        <span style="font-size:.78rem;color:var(--text-muted);">${v.type} · ${v.brand} ${v.model}</span>
+        <span class="badge-small ${v.status==='faal'?'badge-ok':v.status==='arizali'?'badge-danger':'badge-warn'}" style="margin-left:auto;">${v.status==='faal'?'Faal':v.status==='arizali'?'Arızalı':'Bakım'}</span>
+      </div>
+    `).join('');
+  }
+  await renderVehicles();
+}
+
+// Dropdown dışına tıklayınca kapat
+document.addEventListener('click',function(e){
+  const dd=document.getElementById('searchDropdown');
+  const si=document.getElementById('searchInput');
+  if(dd && !dd.contains(e.target) && e.target!==si) dd.style.display='none';
+});
+
+async function clearSearch(){
+  document.getElementById('searchInput').value='';
+  document.getElementById('filterStatus').value='';
+  document.getElementById('filterRegion').value='all';
+  currentRegion='all';
+  document.getElementById('activeFiltersBar').style.display='none';
+  const searchModal = document.getElementById('searchModal');
+  if(!searchModal.classList.contains('hidden')) closeModal('searchModal');
+  await renderVehicles();
+}
+
+async function renderVehicles(db){
+  if(!db) db = await getDB();
+  const query = document.getElementById('searchInput').value.trim();
+  const statusFilter = document.getElementById('filterStatus').value;
+  const regionFilter = currentRegion;
+
+  let vehicles = db.vehicles.filter(v=>{
+    if(regionFilter!=='all' && v.region!==regionFilter) return false;
+    if(statusFilter && v.status!==statusFilter) return false;
+    if(!vehicleMatchesType(v)) return false;
+    if(!vehicleMatchesSearch(v,query)) return false;
+    return true;
+  });
+
+  const grid = document.getElementById('vehicleGrid');
+  if(vehicles.length===0){
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1;"><div class="es-icon">🚒</div><div>Araç bulunamadı.</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = vehicles.map(v=>{
+    const today=new Date(); today.setHours(0,0,0,0);
+    const insDate = v.insurance?new Date(v.insurance):null;
+    const inspDate = v.inspection?new Date(v.inspection):null;
+    const insWarn = insDate && Math.round((insDate-today)/(864e5))<=30;
+    const inspWarn = inspDate && Math.round((inspDate-today)/(864e5))<=30;
+    const activeFaults = (v.faults||[]).filter(f=>f.status==='devam').length;
+
+    const _vPhoto=getVehiclePhoto(v,db);
+    const photoHTML=_vPhoto?`<img class="vc-photo" src="${_vPhoto}" alt="${v.plate}" loading="lazy"/><div class="vc-plate-under">📍 ${v.plate}</div>`:`<div class="vc-photo-placeholder">🚒</div><div class="vc-plate-under">📍 ${v.plate}</div>`;
+    return `
+    <div class="vehicle-card ${v.status}" onclick="openVehicle('${v.id}')">
+      <div class="vc-status-bar"></div>
+      ${photoHTML}
+      <div class="vc-header">
+        <div class="vc-plate">${v.plate}</div>
+        <div class="vc-type">${v.type}</div>
+      </div>
+      <div class="vc-body">
+        <div class="vc-station">
+          <span class="status-dot ${v.status==='faal'?'green':v.status==='arizali'?'red':'yellow'}"></span>
+          ${v.station}
+          ${v.tempstation?`<span style="font-size:.73rem;color:var(--text-dim);">→ <em>${v.tempstation}</em></span>`:''}
+        </div>
+        <div style="font-size:.8rem;color:var(--text-muted);">${v.brand} ${v.model} · ${v.year}</div>
+        <div class="vc-badges">
+          <span class="badge-small ${v.status==='faal'?'badge-ok':v.status==='arizali'?'badge-danger':'badge-warn'}">
+            ${v.status==='faal'?'✓ Faal':v.status==='arizali'?'✕ Arızalı':'⏸ Bakım'}
+          </span>
+          ${activeFaults>0?`<span class="badge-small badge-danger">⚠ ${activeFaults} Aktif Arıza</span>`:''}
+          ${insWarn?`<span class="badge-small badge-warn">🛡 Sigorta!</span>`:''}
+          ${inspWarn?`<span class="badge-small badge-warn">📋 Muayene!</span>`:''}
+          <span class="badge-small badge-blue">Bölge ${v.region}</span>
+        </div>
+      </div>
+      <div class="vc-footer">
+        <div class="vc-km">KM: <strong>${Number(v.km).toLocaleString('tr-TR')}</strong></div>
+        ${(currentUser.role==='admin'||currentUser.role==='editor')?`<button class="vc-edit-btn" onclick="event.stopPropagation();openVehicle('${v.id}',true)">✏ Düzenle</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// searchInput olay dinleyicisi applySearchAndRender fonksiyonuna bağlı (inline oninput ile)
+
+// ════════════════════════════════════════════
+//  VEHICLE MODAL
+// ════════════════════════════════════════════
+async function openVehicle(id, editMode=false){
+  currentVehicleId = id;
+  const db = _dbCache || await getDB();
+  const v = db.vehicles.find(x=>x.id===id);
+  if(!v) return;
+
+  if(!v.notesList) v.notesList = v.notes ? [{id:'n0',text:v.notes,date:v.logDate||'',user:v.logUser||''}] : [];
+  if(!v.specs) v.specs = {};
+  if(!v.photo) v.photo = '';
+
+  const isAdmin = currentUser.role==='admin';
+  const isEditor = currentUser.role==='editor';
+  const canEdit = isAdmin || isEditor;
+  document.getElementById('vModalTitle').textContent = `🚒 ${v.plate} — ${v.type}`;
+  document.getElementById('vSaveBtn').style.display = canEdit?'':'none';
+  document.getElementById('vDeleteBtn').style.display = isAdmin?'':'none';
+
+  // Yardımcı: select'i readonly göster (disabled beyaz/boş gösteriyor)
+  function setSelectReadonly(id, val, editable){
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.value = val||'';
+    el.disabled = false;
+    if(editable){
+      el.classList.remove('readonly-select');
+    } else {
+      el.classList.add('readonly-select');
+    }
+  }
+  function setInputReadonly(id, val, editable){
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.value = val||'';
+    el.disabled = false;
+    if(editable){
+      el.classList.remove('readonly-field');
+    } else {
+      el.classList.add('readonly-field');
+    }
+  }
+
+  // Admin-only input alanları (plate, brand, model, year, chassis, engine)
+  ['plate','brand','model','year','chassis','engine'].forEach(f=>{
+    setInputReadonly('v_'+f, v[f], isAdmin);
+  });
+
+  // Araç Tipi: sadece admin düzenleyebilir, herkes görsün
+  setSelectReadonly('v_type', v.type, isAdmin);
+
+  // Editor + admin input alanları
+  ['km','station','tempstation','insurance','kasko','inspection'].forEach(f=>{
+    setInputReadonly('v_'+f, v[f], canEdit);
+  });
+
+  // Bölge ve Durum: herkes görsün, admin+editor düzenleyebilir
+  setSelectReadonly('v_region', v.region, canEdit);
+  setSelectReadonly('v_status', v.status, canEdit);
+
+  // Log
+  document.getElementById('vt_info_log').innerHTML = v.logUser?
+    `<span>🕒 Son düzenleyen:</span> <span>${v.logUser}</span> · ${v.logDate||''}` : '';
+
+  // Specs — admin düzenleyebilir, viewer/editor görebilir
+  const specInputFields=['length','width','height','weight','outrigger','hp','gears','tire','tirechange','watertank','foamtank','powder','pump','pumpcap','ladderlength','basketcap'];
+  const s=v.specs||{};
+  specInputFields.forEach(f=>{ setInputReadonly('sp_'+f, s[f], isAdmin); });
+  // Kabin Tipi select — herkes görsün, sadece admin düzenleyebilir
+  setSelectReadonly('sp_cabin', s.cabin, isAdmin);
+
+  // Photo
+  const img=document.getElementById('photoPreviewImg');
+  const ph=document.getElementById('photoPlaceholderArea');
+  const pdb=document.getElementById('photoDeleteBtn');
+  const pub=document.getElementById('photoUploadBtn');
+  const _mPhoto=getVehiclePhoto(v,db);
+  if(_mPhoto){img.src=_mPhoto;img.style.display='block';ph.style.display='none';pdb.style.display=canEdit?'':'none';}
+  else{img.style.display='none';ph.style.display='flex';pdb.style.display='none';}
+  pub.style.display=canEdit?'':'none';
+  ph.onclick=canEdit?()=>document.getElementById('vehiclePhotoInput').click():null;
+
+  // Fault list
+  renderFaultList(v);
+  // Notes
+  renderNotesList(v);
+  // Station timeline
+  renderStationTimeline(v);
+  // Docs
+  renderDocsTab(v);
+
+  document.getElementById('addFaultBtn').style.display = canEdit?'':'none';
+  document.getElementById('addStationBtn').style.display = canEdit?'':'none';
+  document.getElementById('addFileArea').style.display = canEdit?'':'none';
+  document.getElementById('noteInputArea').style.display = canEdit?'':'none';
+  // Fotoğraf sekmesi sadece admin
+  document.getElementById('photoTabBtn').style.display = isAdmin?'':'none';
+  document.getElementById('poolSelectArea').style.display = isAdmin?'':'none';
+
+  switchModalTab('vt-info', document.querySelector('#vModalTabs .modal-tab'));
+  document.getElementById('vehicleModal').classList.remove('hidden');
+  // Havuz dropdown'larını doldur
+  populatePoolSelects();
+  window._poolPhotoRef=null;
+}
+
+async function saveVehicle(){
+  const isAdmin = currentUser.role==='admin';
+  const isEditor = currentUser.role==='editor';
+  if(!isAdmin && !isEditor){showToast('Kaydetme yetkiniz yok.','error');return;}
+  const db = await getDB();
+  const idx = db.vehicles.findIndex(x=>x.id===currentVehicleId);
+  if(idx===-1) return;
+  const v = db.vehicles[idx];
+
+  // Kaydet öncesi eski değerleri sakla
+  const oldStation = v.station||'';
+  const oldTempstation = v.tempstation||'';
+
+  // Admin tüm alanları kaydeder
+  if(isAdmin){
+    const allFields = ['plate','type','brand','model','year','chassis','engine','km','region','status','station','tempstation','insurance','kasko','inspection'];
+    allFields.forEach(f=>{ v[f]=document.getElementById('v_'+f)?.value||''; });
+    const specFields=['length','width','height','weight','outrigger','hp','gears','cabin','tire','tirechange','watertank','foamtank','powder','pump','pumpcap','ladderlength','basketcap'];
+    if(!v.specs) v.specs={};
+    specFields.forEach(f=>{const el=document.getElementById('sp_'+f);if(el) v.specs[f]=el.value||'';});
+  } else {
+    // Editör sadece belirli alanları kaydeder
+    const editorFields = ['km','region','status','station','tempstation','insurance','kasko','inspection'];
+    editorFields.forEach(f=>{ v[f]=document.getElementById('v_'+f)?.value||''; });
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+
+  // ── Genel Bilgi'den istasyon değişikliği → otomatik tarihçe kaydı ──
+  if(!v.stationHistory) v.stationHistory=[];
+  const newStation = v.station||'';
+  const newTempstation = v.tempstation||'';
+
+  if(newStation !== oldStation && newStation){
+    v.stationHistory.push({
+      id:'sh'+Date.now(),
+      date:today,
+      type:'kalici',
+      station:newStation,
+      notes:'Genel Bilgi sekmesinden güncellendi.',
+      logUser:currentUser.username,
+      logDate:today
+    });
+  }
+  if(newTempstation !== oldTempstation){
+    if(newTempstation){
+      v.stationHistory.push({
+        id:'sh'+(Date.now()+1),
+        date:today,
+        type:'gecici',
+        station:newTempstation,
+        notes:'Genel Bilgi sekmesinden güncellendi.',
+        logUser:currentUser.username,
+        logDate:today
+      });
+    } else if(oldTempstation){
+      // Geçici görev temizlendi → dönüş kaydı
+      v.stationHistory.push({
+        id:'sh'+(Date.now()+1),
+        date:today,
+        type:'donus',
+        station:oldStation||newStation,
+        notes:'Genel Bilgi sekmesinden geçici görev temizlendi.',
+        logUser:currentUser.username,
+        logDate:today
+      });
+    }
+  }
+
+  // Havuzdan seçilen fotoğraf — artık kopyalamıyoruz, poolRef yeterli
+  if(window._poolPhotoRef){ window._poolPhotoRef=null; } // temizle, gerek yok
+  // Havuz referansını kaydet (güncelleme takibi için)
+  if(window._poolRef){
+    v.poolRef = window._poolRef;
+    window._poolRef=null;
+  }
+  v.logUser = currentUser.username;
+  v.logDate = today;
+  await saveDB(db);
+  showToast('Araç bilgileri kaydedildi ✓','success');
+  closeModal('vehicleModal');
+  await renderAll();
+}
+
+async function deleteVehicle(){
+  if(currentUser.role!=='admin'){showToast('Yetkisiz işlem','error');return;}
+  if(!confirm('Bu aracı silmek istediğinizden emin misiniz?')) return;
+  if(!confirm('Bu işlem geri alınamaz!')) return;
+  const db=await getDB();
+  db.vehicles=db.vehicles.filter(v=>v.id!==currentVehicleId);
+  await saveDB(db);
+  closeModal('vehicleModal');
+  await renderAll();
+  showToast('Araç silindi','info');
+}
+
+// ════════════════════════════════════════════
+//  ADD VEHICLE
+// ════════════════════════════════════════════
+async function openAddVehicle(){
+  if(currentUser.role!=='admin'){showToast('Araç ekleme yetkisi sadece Admin\'e aittir.','error');return;}
+  // _dbCache varsa ağ isteği yok — yoksa bir kez bekle
+  const db = _dbCache || await getDB();
+  const newId = 'v' + db.nextVehicleId++;
+  const newVehicle = {
+    id:newId, plate:'', type:'Tanker', brand:'', model:'', year:new Date().getFullYear(),
+    chassis:'', engine:'', km:0, region:'1', status:'faal', station:'', tempstation:'',
+    insurance:'', kasko:'', inspection:'', notes:'', notesList:[],
+    faults:[], stationHistory:[], services:[], docs:[], files:[],
+    logUser:currentUser.username, logDate:new Date().toISOString().split('T')[0]
+  };
+  db.vehicles.push(newVehicle);
+  // Modal hemen aç
+  openVehicle(newId, true);
+  showToast('Yeni araç oluşturuldu. Bilgileri doldurup kaydedin.','info');
+  // Supabase kaydını arka planda yap — kullanıcıyı beklettirme
+  saveDB(db).then(()=>renderAll());
+}
+
+// ════════════════════════════════════════════
+//  PHOTO
+// ════════════════════════════════════════════
+async function handlePhotoUpload(event){
+  const file=event.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=async(e)=>{
+    showToast('Fotoğraf işleniyor…','info');
+    const compressed = await compressPhoto(e.target.result, 800, 0.75);
+    const db=await getDB();
+    const v=db.vehicles.find(x=>x.id===currentVehicleId);
+    if(!v) return;
+    v.photo=compressed;
+    await saveDB(db);
+    const img=document.getElementById('photoPreviewImg');
+    const ph=document.getElementById('photoPlaceholderArea');
+    img.src=compressed;img.style.display='block';ph.style.display='none';
+    document.getElementById('photoDeleteBtn').style.display='';
+    await renderVehicles();
+    showToast('Fotoğraf yüklendi ✓','success');
+  };
+  reader.readAsDataURL(file);
+  event.target.value='';
+}
+
+async function deletePhoto(){
+  if(!confirm('Fotoğrafı kaldırmak istiyor musunuz?')) return;
+  const db=await getDB();
+  const v=db.vehicles.find(x=>x.id===currentVehicleId);
+  if(!v) return;
+  v.photo='';
+  await saveDB(db);
+  document.getElementById('photoPreviewImg').style.display='none';
+  document.getElementById('photoPlaceholderArea').style.display='flex';
+  document.getElementById('photoDeleteBtn').style.display='none';
+  await renderVehicles();
+  showToast('Fotoğraf kaldırıldı','info');
+}
+
+// ════════════════════════════════════════════
+//  TYPE FILTER
+// ════════════════════════════════════════════
+let currentTypeFilter='all';
+const TYPE_MAP={'Arazöz':['Arazöz'],'Tanker':['Tanker','Su Tankeri'],'Merdiven':['Merdiven'],'Kurtarma':['Kurtarma','Özel Kurtarma'],'Şnorkel':['Şnorkel'],'Hizmet':['Hizmet','Komuta Aracı','Ambulans','Lojistik','KBRN Aracı'],'Sivil':['Sivil'],'Diger':['Diğer']};
+function normalize_t(s){return (s||'').toLowerCase().replace(/ı/g,'i').replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s').replace(/ö/g,'o').replace(/ç/g,'c');}
+function vehicleMatchesType(v){
+  if(currentTypeFilter==='all') return true;
+  const allowed=TYPE_MAP[currentTypeFilter]||[currentTypeFilter];
+  return allowed.some(t=>normalize_t(v.type)===normalize_t(t)||normalize_t(v.type).includes(normalize_t(t)));
+}
+async function setTypeFilter(type,el){
+  currentTypeFilter=type;
+  document.querySelectorAll('.type-tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  await renderVehicles();
+}
+
+// ════════════════════════════════════════════
+//  NOTES
+// ════════════════════════════════════════════
+function renderNotesList(v){
+  const notes=v.notesList||[];
+  const el=document.getElementById('notesList');
+  const canEdit=currentUser.role==='admin'||currentUser.role==='editor';
+  if(notes.length===0){el.innerHTML='<div class="empty-state" style="padding:24px;"><div class="es-icon">📝</div><div>Henüz not eklenmemiş.</div></div>';return;}
+  el.innerHTML=[...notes].reverse().map(n=>`
+    <div class="note-bar">
+      <div style="flex:1;">
+        <div class="note-bar-text">${n.text.replace(/\n/g,'<br/>')}</div>
+        <div class="note-bar-meta">📅 ${n.date} · 👤 ${n.user}</div>
+      </div>
+      ${currentUser.role==='admin'?`<div class="note-bar-actions"><button class="btn-del" onclick="deleteNote('${n.id}')">🗑</button></div>`:''}
+    </div>`).join('');
+}
+
+async function addNote(){
+  const text=document.getElementById('noteTextInput').value.trim();
+  if(!text){showToast('Not boş olamaz','error');return;}
+  const db=await getDB();
+  const v=db.vehicles.find(x=>x.id===currentVehicleId);
+  if(!v) return;
+  if(!v.notesList) v.notesList=[];
+  v.notesList.push({id:'n'+Date.now(),text,date:new Date().toISOString().split('T')[0],user:currentUser.username});
+  await saveDB(db);
+  document.getElementById('noteTextInput').value='';
+  renderNotesList(v);
+  showToast('Not eklendi ✓','success');
+}
+
+async function deleteNote(nid){
+  if(currentUser.role!=='admin'){showToast('Not silme yetkisi sadece Admin\'e aittir.','error');return;}
+  if(!confirm('Bu notu silmek istiyor musunuz?')) return;
+  const db=await getDB();
+  const v=db.vehicles.find(x=>x.id===currentVehicleId);
+  if(!v) return;
+  v.notesList=(v.notesList||[]).filter(n=>n.id!==nid);
+  await saveDB(db);
+  renderNotesList(v);
+  showToast('Not silindi','info');
+}
+
+// ════════════════════════════════════════════
+//  FAULT
+// ════════════════════════════════════════════
+function renderFaultList(v){
+  const canEdit=currentUser.role==='admin'||currentUser.role==='editor';
+  const faults=v.faults||[];
+  const el=document.getElementById('faultList');
+  if(faults.length===0){el.innerHTML='<div class="empty-state"><div class="es-icon">✅</div><div>Arıza kaydı yok.</div></div>';return;}
+  const icons={Motor:'🔩',Şanzıman:'⚙','Araç Yürüyeni':'🚗','Üst Yapı':'🔝',Fren:'🛑',Elektrik:'⚡',Kaporta:'🚘',Hidrolik:'💧','Pompa Sistemi':'💦',Lastik:'🔘',Soğutma:'❄',Diğer:'🔧'};
+  const groups={};
+  faults.forEach(f=>{if(!groups[f.cat])groups[f.cat]=[];groups[f.cat].push(f);});
+  el.innerHTML=Object.entries(groups).map(([cat,cf])=>{
+    const hasActive=cf.some(f=>f.status==='devam');
+    const bodyId='fcat_'+cat.replace(/\s/g,'_');
+    const cards=cf.map(f=>`
+      <div class="fault-detail-card">
+        <span class="badge-small ${f.status==='tamamlandi'?'badge-ok':'badge-danger'}" style="margin-bottom:8px;display:inline-block;">${f.status==='tamamlandi'?'✓ Tamamlandı':'⚠ Devam Ediyor'}</span>
+        <div class="fault-detail-desc">${f.desc}</div>
+        <div class="fault-detail-meta">
+          <span>📅 ${f.date}</span>
+          ${f.service?`<span>🔧 ${f.service}</span>`:''}
+          ${f.servicedate?`<span>📆 ${f.servicedate}</span>`:''}
+          ${f.fixdate?`<span>✅ ${f.fixdate}</span>`:''}
+          ${f.cost?`<span>💰 ${Number(f.cost).toLocaleString('tr-TR')}₺</span>`:''}
+        </div>
+        ${canEdit?`<div class="fault-status-toggle">
+          <button class="btn-status-faal" onclick="toggleFaultStatus('${f.id}','tamamlandi')" ${f.status==='tamamlandi'?'disabled style=\'opacity:.4;cursor:default;\'':''}>✓ Tamamlandı</button>
+          <button class="btn-status-devam" onclick="toggleFaultStatus('${f.id}','devam')" ${f.status==='devam'?'disabled style=\'opacity:.4;cursor:default;\'':''}>⚠ Devam Ediyor</button>
+          <button class="btn-edit-sm" onclick="openEditFault('${f.id}')">✏ Düzenle</button>
+          ${currentUser.role==='admin'?`<button class="btn-del" onclick="deleteFault('${f.id}')">🗑 Sil</button>`:''}
+        </div>`:''}
+      </div>`).join('');
+    return `<div class="fault-cat-group">
+      <div class="fault-cat-header" onclick="document.getElementById('${bodyId}').classList.toggle('open')">
+        <div class="fault-cat-title">${icons[cat]||'🔧'} ${cat}<span class="fault-cat-count ${hasActive?'has-active':'all-done'}">${cf.length} kayıt · ${hasActive?cf.filter(f=>f.status==='devam').length+' Aktif':'Tamamlandı'}</span></div>
+        <span style="color:var(--text-muted);">▼</span>
+      </div>
+      <div class="fault-cat-body" id="${bodyId}">${cards}</div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleFaultStatus(fid,newStatus){
+  const db=await getDB();const v=db.vehicles.find(x=>x.id===currentVehicleId);if(!v)return;
+  const f=v.faults.find(x=>x.id===fid);if(!f)return;
+  f.status=newStatus;f.logUser=currentUser.username;f.logDate=new Date().toISOString().split('T')[0];
+  if(newStatus==='tamamlandi'&&!f.fixdate) f.fixdate=new Date().toISOString().split('T')[0];
+  if(!v.faults.some(x=>x.status==='devam')&&v.status==='arizali') v.status='faal';
+  await saveDB(db);renderFaultList(v);await renderAll();showToast('Arıza durumu güncellendi ✓','success');
+}
+
+async function openEditFault(fid){
+  const db=await getDB();const v=db.vehicles.find(x=>x.id===currentVehicleId);if(!v)return;
+  const f=v.faults.find(x=>x.id===fid);if(!f)return;
+  document.getElementById('f_editId').value=fid;
+  document.getElementById('f_date').value=f.date||'';
+  document.getElementById('f_cat').value=f.cat||'Motor';
+  document.getElementById('f_desc').value=f.desc||'';
+  document.getElementById('f_service').value=f.service||'';
+  document.getElementById('f_servicedate').value=f.servicedate||'';
+  document.getElementById('f_fixdate').value=f.fixdate||'';
+  document.getElementById('f_cost').value=f.cost||'';
+  document.getElementById('f_status').value=f.status||'devam';
+  document.getElementById('faultModal').classList.remove('hidden');
+}
+
+function openAddFault(){
+  document.getElementById('f_editId').value='';
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('f_date').value=today;
+  document.getElementById('f_cat').value='Motor';
+  document.getElementById('f_desc').value='';
+  document.getElementById('f_service').value='';
+  document.getElementById('f_servicedate').value='';
+  document.getElementById('f_fixdate').value='';
+  document.getElementById('f_cost').value='';
+  document.getElementById('f_status').value='devam';
+  document.getElementById('faultModal').classList.remove('hidden');
+}
+
+async function saveFault(){
+  const db=await getDB();const v=db.vehicles.find(x=>x.id===currentVehicleId);if(!v)return;
+  const editId=document.getElementById('f_editId').value;
+  const data={date:document.getElementById('f_date').value,cat:document.getElementById('f_cat').value,desc:document.getElementById('f_desc').value,service:document.getElementById('f_service').value,servicedate:document.getElementById('f_servicedate').value,fixdate:document.getElementById('f_fixdate').value,cost:document.getElementById('f_cost').value,status:document.getElementById('f_status').value,logUser:currentUser.username,logDate:new Date().toISOString().split('T')[0]};
+  if(editId){
+    const idx=v.faults.findIndex(x=>x.id===editId);
+    if(idx!==-1) v.faults[idx]={...v.faults[idx],...data};
+    showToast('Arıza güncellendi ✓','success');
+  } else {
+    data.id='f'+Date.now();v.faults.unshift(data);
+    if(data.status==='devam') v.status='arizali';
+    showToast('Arıza kaydı eklendi ✓','success');
+  }
+  v.logUser=currentUser.username;v.logDate=new Date().toISOString().split('T')[0];
+  await saveDB(db);renderFaultList(v);closeModal('faultModal');await renderAll();
+}
+
+async function deleteFault(fid){
+  if(currentUser.role!=='admin'){showToast('Arıza kaydı silme yetkisi sadece Admin\'e aittir.','error');return;}
+  if(!confirm('Bu arıza kaydını silmek istediğinizden emin misiniz?')) return;
+  const db=await getDB();
+  const v=db.vehicles.find(x=>x.id===currentVehicleId);
+  v.faults=v.faults.filter(f=>f.id!==fid);
+  v.logUser=currentUser.username;
+  v.logDate=new Date().toISOString().split('T')[0];
+  await saveDB(db);
+  renderFaultList(v);
+  await renderAll();
+  showToast('Arıza kaydı silindi','info');
+}
+
+// ════════════════════════════════════════════
+//  STATS
+// ════════════════════════════════════════════
+function renderStats_Vehicle(v){
+  const cats={};
+  v.faults.forEach(f=>{cats[f.cat]=(cats[f.cat]||0)+1;});
+  const labels=Object.keys(cats);
+  const data=Object.values(cats);
+  const totalCost = v.faults.reduce((s,f)=>s+Number(f.cost||0),0);
+  const completed = v.faults.filter(f=>f.status==='tamamlandi').length;
+  const active = v.faults.filter(f=>f.status==='devam').length;
+
+  if(faultChart) faultChart.destroy();
+  if(labels.length>0){
+    faultChart = new Chart(document.getElementById('faultChart'),{
+      type:'bar',
+      data:{
+        labels,
+        datasets:[{
+          label:'Arıza Sayısı',
+          data,
+          backgroundColor:'rgba(230,57,70,0.6)',
+          borderColor:'rgba(230,57,70,1)',
+          borderWidth:1,
+          borderRadius:6,
+        }]
+      },
+      options:{
+        responsive:true,
+        plugins:{legend:{labels:{color:'#8892a4'}}},
+        scales:{
+          x:{ticks:{color:'#8892a4'},grid:{color:'rgba(255,255,255,0.04)'}},
+          y:{ticks:{color:'#8892a4',stepSize:1},grid:{color:'rgba(255,255,255,0.04)'}}
+        }
+      }
+    });
+  } else {
+    const ctx=document.getElementById('faultChart').getContext('2d');
+    ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+    ctx.fillStyle='#4a5568';ctx.font='14px Inter';ctx.textAlign='center';
+    ctx.fillText('Arıza verisi yok',ctx.canvas.width/2,ctx.canvas.height/2);
+  }
+
+  document.getElementById('statsGrid').innerHTML=`
+    <div class="info-item"><div class="info-item-label">Toplam Arıza</div><div class="info-item-value">${v.faults.length}</div></div>
+    <div class="info-item"><div class="info-item-label">Aktif Arıza</div><div class="info-item-value" style="color:var(--red)">${active}</div></div>
+    <div class="info-item"><div class="info-item-label">Tamamlanan</div><div class="info-item-value" style="color:var(--green)">${completed}</div></div>
+    <div class="info-item"><div class="info-item-label">Toplam Maliyet</div><div class="info-item-value">${totalCost.toLocaleString('tr-TR')}₺</div></div>
+    <div class="info-item"><div class="info-item-label">Güncel KM</div><div class="info-item-value">${Number(v.km).toLocaleString('tr-TR')}</div></div>
+    <div class="info-item"><div class="info-item-label">Araç Yaşı</div><div class="info-item-value">${new Date().getFullYear()-Number(v.year)} yıl</div></div>
+  `;
+}
+
+// ════════════════════════════════════════════
+//  STATION HISTORY
+// ════════════════════════════════════════════
+function renderStationTimeline(v){
+  const canEdit = currentUser.role==='admin'||currentUser.role==='editor';
+  if(!v.stationHistory||v.stationHistory.length===0){
+    document.getElementById('stationTimeline').innerHTML='<div class="empty-state"><div class="es-icon">🏢</div><div>İstasyon hareketi yok.</div></div>';
+    return;
+  }
+  const typeMap={kalici:'🏠 Kalıcı Görev',gecici:'🔄 Geçici Görev',donus:'↩ Dönüş'};
+  document.getElementById('stationTimeline').innerHTML = [...v.stationHistory].reverse().map(s=>`
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-date">${s.date} · ${typeMap[s.type]||s.type}</div>
+      <div class="tl-text"><strong>${s.station}</strong></div>
+      ${s.notes?`<div class="tl-sub">${s.notes}</div>`:''}
+      <div class="tl-sub" style="font-size:.72rem;margin-top:4px;color:var(--text-dim);">Kaydeden: ${s.logUser} · ${s.logDate}</div>
+      ${currentUser.role==='admin'?`<button class="btn-del" style="margin-top:6px;" onclick="deleteStation('${s.id}')">✕ Sil</button>`:''}
+    </div>
+  `).join('');
+}
+
+function openAddStation(){
+  document.getElementById('st_date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('st_station').value='';
+  document.getElementById('st_notes').value='';
+  document.getElementById('stationModal').classList.remove('hidden');
+}
+
+async function saveStation(){
+  const db=await getDB();
+  const v=db.vehicles.find(x=>x.id===currentVehicleId);
+  if(!v) return;
+  const type=document.getElementById('st_type').value;
+  const station=document.getElementById('st_station').value;
+  v.stationHistory.push({
+    id:'sh'+Date.now(),
+    date:document.getElementById('st_date').value,
+    type,station,
+    notes:document.getElementById('st_notes').value,
+    logUser:currentUser.username,
+    logDate:new Date().toISOString().split('T')[0]
+  });
+  if(type==='kalici'){ v.station=station; }
+  else if(type==='gecici'){ v.tempstation=station; }
+  else if(type==='donus'){ v.tempstation=''; }
+  v.logUser=currentUser.username;
+  v.logDate=new Date().toISOString().split('T')[0];
+  await saveDB(db);
+  renderStationTimeline(v);
+
+  // ── Genel Bilgi alanlarını da güncelle ──
+  const stEl = document.getElementById('v_station');
+  const tmpEl = document.getElementById('v_tempstation');
+  if(stEl) stEl.value = v.station||'';
+  if(tmpEl) tmpEl.value = v.tempstation||'';
+
+  closeModal('stationModal');
+  await renderAll();
+  showToast('İstasyon hareketi eklendi ✓','success');
+}
+
+async function deleteStation(sid){
+  if(currentUser.role!=='admin'){showToast('İstasyon hareketi silme yetkisi sadece Admin\'e aittir.','error');return;}
+  if(!confirm('Bu hareketi silmek istediğinizden emin misiniz?')) return;
+  const db=await getDB();
+  const v=db.vehicles.find(x=>x.id===currentVehicleId);
+  v.stationHistory=v.stationHistory.filter(s=>s.id!==sid);
+
+  // En son kalıcı/geçici hareketi bul ve v.station/tempstation'ı güncelle
+  const history=[...v.stationHistory].sort((a,b)=>a.date>b.date?1:a.date<b.date?-1:0);
+  let lastStation='', lastTemp='';
+  history.forEach(s=>{
+    if(s.type==='kalici') lastStation=s.station;
+    else if(s.type==='gecici') lastTemp=s.station;
+    else if(s.type==='donus') lastTemp='';
+  });
+  v.station=lastStation||v.station;
+  v.tempstation=lastTemp;
+
+  await saveDB(db);
+  renderStationTimeline(v);
+
+  // Genel Bilgi inputlarını güncelle
+  const stEl=document.getElementById('v_station');
+  const tmpEl=document.getElementById('v_tempstation');
+  if(stEl) stEl.value=v.station||'';
+  if(tmpEl) tmpEl.value=v.tempstation||'';
+
+  await renderAll();
+  showToast('Hareket silindi','info');
+}
+
+// ════════════════════════════════════════════
+//  DOCS TAB
+// ════════════════════════════════════════════
+function renderDocsTab(v){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const fmt=(dt)=>{
+    if(!dt) return '<span style="color:var(--text-dim)">Girilmedi</span>';
+    const d=new Date(dt); d.setHours(0,0,0,0);
+    const diff=Math.round((d-today)/(864e5));
+    if(diff<0) return `<span style="color:var(--red);font-weight:700;">${dt} (${Math.abs(diff)} gün geçti!)</span>`;
+    if(diff<=30) return `<span style="color:var(--yellow);font-weight:700;">${dt} (${diff} gün kaldı)</span>`;
+    return `<span style="color:var(--green)">${dt}</span>`;
+  };
+  document.getElementById('docsInfoGrid').innerHTML=`
+    <div class="info-item"><div class="info-item-label">🛡 Sigorta Bitiş</div><div class="info-item-value">${fmt(v.insurance)}</div></div>
+    <div class="info-item"><div class="info-item-label">🔒 Kasko Bitiş</div><div class="info-item-value">${fmt(v.kasko)}</div></div>
+    <div class="info-item"><div class="info-item-label">📋 Muayene Bitiş</div><div class="info-item-value">${fmt(v.inspection)}</div></div>
+  `;
+  // Eklenen evrakları listele (files dizisinden — Dosyalar sekmesinde yüklenenler)
+  renderDocFileList(v);
+}
+
+function renderDocFileList(v){
+  const isAdmin = currentUser.role==='admin';
+  const files = v.files||[];
+  const el = document.getElementById('docFileList');
+  if(files.length===0){
+    el.innerHTML='<div class="empty-state" style="padding:32px;"><div class="es-icon">📂</div><div>Henüz evrak eklenmemiş.</div></div>';
+    return;
+  }
+  el.innerHTML=files.map(f=>
+    `<div class="doc-item">
+      <div style="display:flex;align-items:center;flex:1;">
+        <span class="doc-icon">${f.type&&f.type.includes('pdf')?'📄':f.type&&f.type.includes('image')?'🖼':'📎'}</span>
+        <div>
+          <div class="doc-name">${f.name}</div>
+          <div class="doc-meta">${(f.size/1024).toFixed(1)} KB · ${f.uploadDate} · ${f.uploadUser}</div>
+        </div>
+      </div>
+      <div class="doc-actions">
+        <a href="${f.data}" download="${f.name}" class="btn-sm btn-primary-sm" style="text-decoration:none;">⬇</a>
+        ${isAdmin?`<button class="btn-del" onclick="deleteDocFile('${f.id}')">✕</button>`:''}
+      </div>
+    </div>`
+  ).join('');
+}
+
+async function handleDocFileUpload(event){
+  const files = Array.from(event.target.files);
+  const db=await getDB();
+  const v=db.vehicles.find(x=>x.id===currentVehicleId);
+  if(!v){return;}
+  if(!v.files) v.files=[];
+  let processed=0;
+  files.forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=async(e)=>{
+      v.files.push({
+        id:'file'+Date.now()+Math.random(),
+        name:file.name,
+        size:file.size,
+        type:file.type,
+        data:e.target.result,
+        uploadDate:new Date().toISOString().split('T')[0],
+        uploadUser:currentUser.username
+      });
+      processed++;
+      if(processed===files.length){
+        await saveDB(db);
+        renderDocFileList(v);
+        renderFileList(v);
+        showToast(`${files.length} evrak yüklendi ✓`,'success');
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value='';
+}
+
+async function deleteDocFile(fid){
+  if(currentUser.role!=='admin'){showToast('Evrak silme yetkisi sadece Admin\'e aittir.','error');return;}
+  if(!confirm('Bu evrakı silmek istiyor musunuz?')) return;
+  const db=await getDB();
+  const v=db.vehicles.find(x=>x.id===currentVehicleId);
+  v.files=v.files.filter(f=>f.id!==fid);
+  await saveDB(db);
+  renderDocFileList(v);
+  renderFileList(v);
+  showToast('Evrak silindi','info');
+}
+
+function openAddService(){
+  document.getElementById('sv_date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('sv_firm').value='';
+  document.getElementById('sv_desc').value='';
+  document.getElementById('sv_cost').value='';
+  document.getElementById('sv_next').value='';
+  document.getElementById('serviceModal').classList.remove('hidden');
+}
+
+async function saveService(){
+  const db=await getDB();
+  const v=db.vehicles.find(x=>x.id===currentVehicleId);
+  if(!v) return;
+  v.services.unshift({
+    id:'sv'+Date.now(),
+    date:document.getElementById('sv_date').value,
+    type:document.getElementById('sv_type').value,
+    firm:document.getElementById('sv_firm').value,
+    desc:document.getElementById('sv_desc').value,
+    cost:document.getElementById('sv_cost').value,
+    next:document.getElementById('sv_next').value,
+    logUser:currentUser.username,
+    logDate:new Date().toISOString().split('T')[0]
+  });
+  v.logUser=currentUser.username;
+  v.logDate=new Date().toISOString().split('T')[0];
+  await saveDB(db);
+  renderDocsTab(v);
+  closeModal('serviceModal');
+  showToast('Servis kaydı eklendi ✓','success');
+}
+
+async function deleteService(sid){
+  if(!confirm('Servis kaydını silmek istiyor musunuz?')) return;
+  const db=await getDB();
+  const v=db.vehicles.find(x=>x.id===currentVehicleId);
+  v.services=v.services.filter(s=>s.id!==sid);
+  await saveDB(db);
+  renderDocsTab(v);
+  showToast('Servis kaydı silindi','info');
+}
+
+// ════════════════════════════════════════════
+//  FILE UPLOAD
+// ════════════════════════════════════════════
+async function handleFileUpload(event){
+  const files = Array.from(event.target.files);
+  const db=await getDB();
+  const v=db.vehicles.find(x=>x.id===currentVehicleId);
+  if(!v){return;}
+  let processed=0;
+  files.forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=async(e)=>{
+      v.files.push({
+        id:'file'+Date.now()+Math.random(),
+        name:file.name,
+        size:file.size,
+        type:file.type,
+        data:e.target.result,
+        uploadDate:new Date().toISOString().split('T')[0],
+        uploadUser:currentUser.username
+      });
+      processed++;
+      if(processed===files.length){
+        await saveDB(db);
+        renderDocFileList(v);
+        showToast(`${files.length} dosya yüklendi ✓`,'success');
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value='';
+}
+
+function renderFileList(v){
+  const isAdmin = currentUser.role==='admin';
+  if(!v.files||v.files.length===0){
+    document.getElementById('fileList').innerHTML='<div class="empty-state" style="margin-top:16px;"><div class="es-icon">📂</div><div>Dosya yüklenmemiş.</div></div>';
+    return;
+  }
+  document.getElementById('fileList').innerHTML=v.files.map(f=>
+    `<div class="doc-item">
+      <div style="display:flex;align-items:center;flex:1;">
+        <span class="doc-icon">${f.type&&f.type.includes('pdf')?'📄':f.type&&f.type.includes('image')?'🖼':'📎'}</span>
+        <div>
+          <div class="doc-name">${f.name}</div>
+          <div class="doc-meta">${(f.size/1024).toFixed(1)} KB · ${f.uploadDate} · ${f.uploadUser}</div>
+        </div>
+      </div>
+      <div class="doc-actions">
+        <a href="${f.data}" download="${f.name}" class="btn-sm btn-primary-sm" style="text-decoration:none;">⬇</a>
+        ${isAdmin?`<button class="btn-del" onclick="deleteFile('${f.id}')">✕</button>`:''}
+      </div>
+    </div>`
+  ).join('');
+}
+
+async function deleteFile(fid){
+  if(currentUser.role!=='admin'){showToast('Dosya silme yetkisi sadece Admin\'e aittir.','error');return;}
+  if(!confirm('Dosyayı silmek istiyor musunuz?')) return;
+  const db=await getDB();
+  const v=db.vehicles.find(x=>x.id===currentVehicleId);
+  v.files=v.files.filter(f=>f.id!==fid);
+  await saveDB(db);
+  renderDocFileList(v);
+  showToast('Dosya silindi','info');
+}
+
+// ════════════════════════════════════════════
+//  ADMIN PANEL
+// ════════════════════════════════════════════
+async function showAdminPanel(){
+  document.getElementById('adminModal').classList.remove('hidden');
+  // İlk tab (Kullanıcılar) aktif yap
+  document.querySelectorAll('#adminModal .tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#adminTabBtns .modal-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('at-users').classList.add('active');
+  document.querySelector('#adminTabBtns .modal-tab').classList.add('active');
+  renderUserTable();
+  document.getElementById('editUserCard').style.display='none';
+  document.getElementById('cp_old').value='';
+  document.getElementById('cp_new').value='';
+  document.getElementById('cp_new2').value='';
+}
+
+async function openChangeMyPassword(){
+  document.getElementById('mp_old').value='';
+  document.getElementById('mp_new').value='';
+  document.getElementById('mp_new2').value='';
+  document.getElementById('changeMyPassModal').classList.remove('hidden');
+}
+
+async function changeMyPassword(){
+  const old=document.getElementById('mp_old').value;
+  const nw=document.getElementById('mp_new').value;
+  const nw2=document.getElementById('mp_new2').value;
+  if(!old||!nw||!nw2){showToast('Tüm alanları doldurun','error');return;}
+  if(nw!==nw2){showToast('Yeni şifreler eşleşmiyor','error');return;}
+  if(nw.length<4){showToast('Şifre en az 4 karakter olmalı','error');return;}
+  const db=await getDB();
+  const idx=db.users.findIndex(x=>x.id===currentUser.id);
+  if(idx===-1) return;
+  if(db.users[idx].password!==old){showToast('Mevcut şifre yanlış','error');return;}
+  db.users[idx].password=nw;
+  currentUser.password=nw;
+  localStorage.setItem(SESSION_KEY,JSON.stringify(currentUser));
+  await saveDB(db);
+  closeModal('changeMyPassModal');
+  showToast('Şifre güncellendi ✓','success');
+}
+
+async function renderUserTable(){
+  const db=await getDB();
+  const roleNames={admin:'Admin',editor:'Editör',viewer:'İzleyici'};
+  document.getElementById('userTableBody').innerHTML=db.users.map(u=>`
+    <tr>
+      <td class="td-plate">${u.username}</td>
+      <td>${u.name}</td>
+      <td><span class="badge-small ${u.role==='admin'?'badge-danger':u.role==='editor'?'badge-warn':'badge-blue'}">${roleNames[u.role]}</span></td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn-edit-sm" onclick="openEditUser('${u.id}')">✏</button>
+        ${u.id!=='u1'?`<button class="btn-del" onclick="deleteUser('${u.id}')">✕</button>`:''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function addUser(){
+  const un=document.getElementById('nu_username').value.trim();
+  const nm=document.getElementById('nu_name').value.trim();
+  const pw=document.getElementById('nu_pass').value.trim();
+  const rl=document.getElementById('nu_role').value;
+  if(!un||!pw||!nm){showToast('Tüm alanları doldurun','error');return;}
+  const db=await getDB();
+  if(db.users.find(u=>u.username===un)){showToast('Bu kullanıcı adı zaten var','error');return;}
+  db.users.push({id:'u'+Date.now(),username:un,password:pw,name:nm,role:rl});
+  await saveDB(db);
+  renderUserTable();
+  document.getElementById('nu_username').value='';
+  document.getElementById('nu_name').value='';
+  document.getElementById('nu_pass').value='';
+  showToast('Kullanıcı eklendi ✓','success');
+}
+
+async function openEditUser(uid){
+  const db=await getDB();
+  const u=db.users.find(x=>x.id===uid);
+  if(!u) return;
+  document.getElementById('eu_id').value=u.id;
+  document.getElementById('eu_username').value=u.username;
+  document.getElementById('eu_name').value=u.name;
+  document.getElementById('eu_pass').value='';
+  document.getElementById('eu_role').value=u.role;
+  document.getElementById('editUserCard').style.display='block';
+  document.getElementById('editUserCard').scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+async function saveEditUser(){
+  const uid=document.getElementById('eu_id').value;
+  const un=document.getElementById('eu_username').value.trim();
+  const nm=document.getElementById('eu_name').value.trim();
+  const pw=document.getElementById('eu_pass').value.trim();
+  const rl=document.getElementById('eu_role').value;
+  if(!un||!nm){showToast('Kullanıcı adı ve ad soyad zorunlu','error');return;}
+  const db=await getDB();
+  const idx=db.users.findIndex(x=>x.id===uid);
+  if(idx===-1) return;
+  if(db.users.find(u=>u.username===un && u.id!==uid)){showToast('Bu kullanıcı adı zaten var','error');return;}
+  db.users[idx].username=un;
+  db.users[idx].name=nm;
+  db.users[idx].role=rl;
+  if(pw) db.users[idx].password=pw;
+  // Session güncelle eğer giriş yapan kullanıcıysa
+  if(currentUser.id===uid){
+    currentUser={...db.users[idx]};
+    localStorage.setItem(SESSION_KEY,JSON.stringify(currentUser));
+    setupUI();
+  }
+  await saveDB(db);
+  renderUserTable();
+  document.getElementById('editUserCard').style.display='none';
+  showToast('Kullanıcı güncellendi ✓','success');
+}
+
+async function changeAdminPassword(){
+  const old=document.getElementById('cp_old').value;
+  const nw=document.getElementById('cp_new').value;
+  const nw2=document.getElementById('cp_new2').value;
+  if(!old||!nw||!nw2){showToast('Tüm alanları doldurun','error');return;}
+  if(nw!==nw2){showToast('Yeni şifreler eşleşmiyor','error');return;}
+  if(nw.length<4){showToast('Şifre en az 4 karakter olmalı','error');return;}
+  const db=await getDB();
+  const idx=db.users.findIndex(x=>x.id===currentUser.id);
+  if(idx===-1) return;
+  if(db.users[idx].password!==old){showToast('Mevcut şifre yanlış','error');return;}
+  db.users[idx].password=nw;
+  currentUser.password=nw;
+  localStorage.setItem(SESSION_KEY,JSON.stringify(currentUser));
+  await saveDB(db);
+  document.getElementById('cp_old').value='';
+  document.getElementById('cp_new').value='';
+  document.getElementById('cp_new2').value='';
+  showToast('Şifre güncellendi ✓','success');
+}
+
+async function deleteUser(uid){
+  if(!confirm('Kullanıcıyı silmek istiyor musunuz?')) return;
+  const db=await getDB();
+  db.users=db.users.filter(u=>u.id!==uid);
+  await saveDB(db);
+  renderUserTable();
+  showToast('Kullanıcı silindi','info');
+}
+
+async function clearAllData(){
+  if(!confirm('TÜM veriler silinecek! Emin misiniz?')) return;
+  if(!confirm('Bu işlem geri alınamaz. Devam etmek istiyor musunuz?')) return;
+  _dbCache = null;
+  const fresh = initDB();
+  await saveDB(fresh);
+  showToast('Tüm veriler silindi. Sayfa yenileniyor...','error');
+  setTimeout(()=>location.reload(),1500);
+}
+
+// ════════════════════════════════════════════
+//  IMPORT / EXPORT
+// ════════════════════════════════════════════
+async function exportData(){
+  const db=await getDB();
+  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`ankara_itfaiye_yedek_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Veri dışa aktarıldı ✓','success');
+}
+
+async function importData(event){
+  const file=event.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=async (e)=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.vehicles||!data.users) throw new Error('Geçersiz format');
+      if(!confirm(`${data.vehicles.length} araç ve ${data.users.length} kullanıcı yüklenecek. Mevcut veriler silinecek. Devam?`)) return;
+      _dbCache=null;
+      await saveDB(data);
+      showToast('Veri yüklendi ✓ Yenileniyor...','success');
+      setTimeout(()=>location.reload(),1200);
+    }catch(e){showToast('Geçersiz dosya formatı','error');}
+  };
+  reader.readAsText(file);
+  event.target.value='';
+}
+
+// ════════════════════════════════════════════
+//  MODAL HELPERS
+// ════════════════════════════════════════════
+function closeModal(id){
+  document.getElementById(id).classList.add('hidden');
+  if(id==='vehicleModal' && faultChart){faultChart.destroy();faultChart=null;}
+}
+
+async function switchModalTab(tabId, el){
+  document.querySelectorAll('#vehicleModal .tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#vModalTabs .modal-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  if(el) el.classList.add('active');
+
+  // Render stats on tab switch
+  if(tabId==='vt-stats'){
+    const db=await getDB();
+    const v=db.vehicles.find(x=>x.id===currentVehicleId);
+    if(v) renderStats_Vehicle(v);
+  }
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(ov=>{
+  ov.addEventListener('click',e=>{
+    if(e.target===ov) closeModal(ov.id);
+  });
+});
+
+// ════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════
+function showToast(msg, type='info'){
+  const wrap=document.getElementById('toastWrap');
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;
+  t.textContent=msg;
+  wrap.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2800);
+}
+
+// ════════════════════════════════════════════
+//  INIT: Check session
+// ════════════════════════════════════════════
+
+
+// ════════════════════════════════════════════
+//  ARAÇ HAVUZU (VEHICLE POOL)
+// ════════════════════════════════════════════
+
+function switchAdminTab(tabId, el){
+  document.querySelectorAll('#adminModal .tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#adminTabBtns .modal-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  if(el) el.classList.add('active');
+  if(tabId==='at-users') renderUserTable();
+  if(tabId==='at-pool') renderPoolList();
+}
+
+function openAddPool(){
+  const allFields=['id','brand','model','notes','engine','hp','gears','tire','length','width','height','weight','outrigger','watertank','foamtank','powder','pump','pumpcap','ladderlength','basketcap'];
+  allFields.forEach(f=>{const el=document.getElementById('pool_'+f);if(el) el.value='';});
+  document.getElementById('pool_type').value='Arazöz';
+  document.getElementById('pool_cabin').value='';
+  document.getElementById('poolPhotoPreviewWrap').style.display='none';
+  document.getElementById('poolPhotoPlaceholder').style.display='';
+  document.getElementById('poolPhotoPreview').src='';
+  document.getElementById('poolFormTitle').textContent='➕ Yeni Araç Tipi Ekle';
+  document.getElementById('poolFormCard').style.display='';
+  document.getElementById('poolFormCard').scrollIntoView({behavior:'smooth'});
+}
+
+function handlePoolPhoto(event){
+  const file=event.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=async(e)=>{
+    showToast('Fotoğraf işleniyor…','info');
+    const compressed = await compressPhoto(e.target.result, 800, 0.75);
+    document.getElementById('poolPhotoPreview').src=compressed;
+    document.getElementById('poolPhotoPreviewWrap').style.display='';
+    document.getElementById('poolPhotoPlaceholder').style.display='none';
+    showToast('Havuz fotoğrafı hazır ✓','success');
+  };
+  reader.readAsDataURL(file);
+  event.target.value='';
+}
+
+function clearPoolPhoto(){
+  document.getElementById('poolPhotoPreview').src='';
+  document.getElementById('poolPhotoPreviewWrap').style.display='none';
+  document.getElementById('poolPhotoPlaceholder').style.display='';
+}
+
+async function savePool(){
+  const brand = document.getElementById('pool_brand').value.trim();
+  const model = document.getElementById('pool_model').value.trim();
+  if(!brand||!model){showToast('Marka ve Model zorunludur','error');return;}
+  const db = await getDB();
+  if(!db.vehiclePool) db.vehiclePool=[];
+  const editId = document.getElementById('pool_id').value;
+  const photo = document.getElementById('poolPhotoPreview').src || '';
+  const gv = id => (document.getElementById('pool_'+id)||{}).value||'';
+  const entry = {
+    id: editId || 'pool'+Date.now(),
+    brand, model,
+    type: gv('type'),
+    photo: photo.startsWith('data:') ? photo : '',
+    notes: gv('notes'),
+    specs:{
+      engine:gv('engine'), hp:gv('hp'), gears:gv('gears'),
+      cabin:gv('cabin'), tire:gv('tire'),
+      length:gv('length'), width:gv('width'), height:gv('height'),
+      weight:gv('weight'), outrigger:gv('outrigger'),
+      watertank:gv('watertank'), foamtank:gv('foamtank'), powder:gv('powder'),
+      pump:gv('pump'), pumpcap:gv('pumpcap'),
+      ladderlength:gv('ladderlength'), basketcap:gv('basketcap'),
+    }
+  };
+
+  if(editId){
+    // Mevcut havuz kaydını güncelle
+    const idx=db.vehiclePool.findIndex(p=>p.id===editId);
+    if(idx!==-1) db.vehiclePool[idx]=entry;
+
+    // Bu marka+model ile kayıtlı araçları bul (poolRef veya marka+model eşleşmesi)
+    const linkedVehicles = db.vehicles.filter(v=>
+      v.poolRef===editId ||
+      (v.brand&&v.model&&
+       v.brand.trim().toLowerCase()===brand.toLowerCase()&&
+       v.model.trim().toLowerCase()===model.toLowerCase())
+    );
+
+    if(linkedVehicles.length>0){
+      const applyToAll = confirm(
+        `Bu model (${brand} ${model}) ile kayıtlı ${linkedVehicles.length} araç bulundu.\n\n` +
+        `✅ EVET → Mevcut ${linkedVehicles.length} araçta da specs ve fotoğraf güncellensin\n` +
+        `❌ HAYIR → Sadece havuz kaydı değişsin, mevcut araçlar etkilenmesin`
+      );
+      if(applyToAll){
+        linkedVehicles.forEach(v=>{
+          if(!v.specs) v.specs={};
+          Object.assign(v.specs, entry.specs);
+          if(entry.photo) v.photo=entry.photo;
+          v.type=entry.type;
+          v.poolRef=editId;
+          v.logUser=currentUser.username;
+          v.logDate=new Date().toISOString().split('T')[0];
+        });
+        showToast(`Havuz + ${linkedVehicles.length} araç güncellendi ✓`,'success');
+      } else {
+        showToast('Havuz güncellendi — mevcut araçlar değişmedi ✓','success');
+      }
+    } else {
+      showToast('Havuz güncellendi ✓','success');
+    }
+  } else {
+    db.vehiclePool.push(entry);
+    showToast('Havuza eklendi ✓','success');
+  }
+
+  await saveDB(db);
+  document.getElementById('poolFormCard').style.display='none';
+  renderPoolList();
+}
+
+async function renderPoolList(){
+  const db = await getDB();
+  const pool = db.vehiclePool||[];
+  const el = document.getElementById('poolList');
+  if(pool.length===0){
+    el.innerHTML='<div class="empty-state"><div class="es-icon">🚒</div><div>Henüz araç havuza eklenmedi.</div></div>';
+    return;
+  }
+  // Markaya göre grupla
+  const grouped={};
+  pool.forEach(p=>{
+    if(!grouped[p.brand]) grouped[p.brand]=[];
+    grouped[p.brand].push(p);
+  });
+  el.innerHTML = Object.entries(grouped).map(([brand,items])=>`
+    <div style="margin-bottom:16px;">
+      <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;color:var(--accent2);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);">🏭 ${brand} <span style="color:var(--text-dim);font-size:.8rem;font-weight:400;">(${items.length} model)</span></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;">
+        ${items.map(p=>`
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+            ${p.photo?`<img src="${p.photo}" style="width:100%;height:100px;object-fit:cover;display:block;"/>`:
+              `<div style="width:100%;height:100px;background:var(--bg-panel);display:flex;align-items:center;justify-content:center;font-size:2rem;">🚒</div>`}
+            <div style="padding:10px 12px;">
+              <div style="font-weight:700;font-size:.9rem;color:#fff;">${p.model}</div>
+              <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px;">${p.type}</div>
+              ${p.specs?.hp?`<div style="font-size:.75rem;color:var(--text-dim);margin-top:4px;">${p.specs.hp}HP · ${p.specs.cabin||''}</div>`:''}
+              <div style="display:flex;gap:6px;margin-top:8px;">
+                <button class="btn-sm btn-warn-sm" style="flex:1;font-size:.75rem;" onclick="editPool('${p.id}')">✏ Düzenle</button>
+                <button class="btn-del" onclick="deletePool('${p.id}')">✕</button>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+async function editPool(pid){
+  const db = await getDB();
+  const p = (db.vehiclePool||[]).find(x=>x.id===pid);
+  if(!p) return;
+  document.getElementById('pool_id').value=p.id;
+  document.getElementById('pool_brand').value=p.brand;
+  document.getElementById('pool_model').value=p.model;
+  document.getElementById('pool_type').value=p.type||'Arazöz';
+  document.getElementById('pool_notes').value=p.notes||'';
+  const specFields=['engine','hp','gears','cabin','tire','length','width','height','weight','outrigger','watertank','foamtank','powder','pump','pumpcap','ladderlength','basketcap'];
+  specFields.forEach(f=>{
+    const el=document.getElementById('pool_'+f);
+    if(el) el.value=p.specs?.[f]||'';
+  });
+  if(p.photo){
+    document.getElementById('poolPhotoPreview').src=p.photo;
+    document.getElementById('poolPhotoPreviewWrap').style.display='';
+    document.getElementById('poolPhotoPlaceholder').style.display='none';
+  } else {
+    document.getElementById('poolPhotoPreviewWrap').style.display='none';
+    document.getElementById('poolPhotoPlaceholder').style.display='';
+  }
+  document.getElementById('poolFormTitle').textContent='✏ Araç Tipi Düzenle';
+  document.getElementById('poolFormCard').style.display='';
+  document.getElementById('poolFormCard').scrollIntoView({behavior:'smooth'});
+}
+
+async function deletePool(pid){
+  if(!confirm('Bu araç tipini havuzdan silmek istiyor musunuz?')) return;
+  const db = await getDB();
+  db.vehiclePool=(db.vehiclePool||[]).filter(p=>p.id!==pid);
+  await saveDB(db);
+  renderPoolList();
+  showToast('Havuzdan silindi','info');
+}
+
+// ── Araç Ekleme: Havuz dropdown'larını doldur ──
+async function populatePoolSelects(){
+  const db = await getDB();
+  const pool = db.vehiclePool||[];
+  const brandSel = document.getElementById('pool_brand_sel');
+  if(!brandSel) return;
+  const brands=[...new Set(pool.map(p=>p.brand))].sort();
+  brandSel.innerHTML='<option value="">— Marka Seçin —</option>'+brands.map(b=>`<option value="${b}">${b}</option>`).join('');
+  document.getElementById('pool_model_sel').innerHTML='<option value="">— Önce Marka Seçin —</option>';
+  document.getElementById('pool_model_sel').disabled=true;
+  document.getElementById('poolSelectedInfo').style.display='none';
+}
+
+async function onPoolBrandChange(){
+  const brand = document.getElementById('pool_brand_sel').value;
+  const modelSel = document.getElementById('pool_model_sel');
+  if(!brand){ modelSel.innerHTML='<option value="">— Önce Marka Seçin —</option>'; modelSel.disabled=true; return; }
+  const db = await getDB();
+  const models=(db.vehiclePool||[]).filter(p=>p.brand===brand);
+  modelSel.innerHTML='<option value="">— Model Seçin —</option>'+models.map(p=>`<option value="${p.id}">${p.model} (${p.type})</option>`).join('');
+  modelSel.disabled=false;
+  document.getElementById('poolSelectedInfo').style.display='none';
+}
+
+async function onPoolModelChange(){
+  const pid = document.getElementById('pool_model_sel').value;
+  if(!pid){ document.getElementById('poolSelectedInfo').style.display='none'; return; }
+  const db = await getDB();
+  const p = (db.vehiclePool||[]).find(x=>x.id===pid);
+  if(!p) return;
+  // Genel bilgi sekmesi
+  const sv = (id,val)=>{const el=document.getElementById(id);if(el&&val) el.value=val;};
+  sv('v_brand',p.brand); sv('v_model',p.model);
+  const typeEl=document.getElementById('v_type');
+  if(typeEl&&p.type){
+    const opt=[...typeEl.options].find(o=>o.value===p.type||o.text===p.type);
+    if(opt) typeEl.value=opt.value;
+  }
+  // Üst yapı sekmesi — tüm spec alanları
+  const specMap={
+    engine:'sp_engine', hp:'sp_hp', gears:'sp_gears',
+    cabin:'sp_cabin', tire:'sp_tire',
+    length:'sp_length', width:'sp_width', height:'sp_height',
+    weight:'sp_weight', outrigger:'sp_outrigger',
+    watertank:'sp_watertank', foamtank:'sp_foamtank', powder:'sp_powder',
+    pump:'sp_pump', pumpcap:'sp_pumpcap',
+    ladderlength:'sp_ladderlength', basketcap:'sp_basketcap'
+  };
+  Object.entries(specMap).forEach(([sk,fid])=>{
+    const el=document.getElementById(fid);
+    if(!el) return;
+    const val=p.specs?.[sk]||'';
+    if(!val) return;
+    // select için option eşleştir, input için direkt yaz
+    if(el.tagName==='SELECT'){
+      const opt=[...el.options].find(o=>o.value===val);
+      if(opt) el.value=val;
+    } else {
+      el.value=val;
+    }
+  });
+  // Fotoğraf
+  if(p.photo){
+    const img=document.getElementById('photoPreviewImg');
+    const ph=document.getElementById('photoPlaceholderArea');
+    if(img){ img.src=p.photo; img.style.display='block'; }
+    if(ph) ph.style.display='none';
+    const delBtn=document.getElementById('photoDeleteBtn');
+    if(delBtn) delBtn.style.display='';
+    window._poolPhotoRef = p.photo;
+  }
+  window._poolRef = p.id; // Araç kaydedilince poolRef olarak yazılacak
+  document.getElementById('poolSelectedInfo').style.display='';
+  showToast(`${p.brand} ${p.model} bilgileri yüklendi ✓`,'success');
+}
+
+// ── window'a aktar (type=module zorunluluğu) ──
+(function(){
+  const assign = (name, fn) => { try{ window[name]=fn; }catch(e){} };
+
+  // Önce downloadFile tanımla (eksikti)
+  window.downloadFile = function(fid){
+    (async()=>{
+      const db = await getDB();
+      const v = db.vehicles.find(x=>x.id===currentVehicleId);
+      if(!v) return;
+      const f = (v.files||[]).find(x=>x.id===fid);
+      if(!f) return;
+      const a = document.createElement('a');
+      a.href = f.data;
+      a.download = f.name;
+      a.click();
+    })();
+  };
+
+  assign('addNote',addNote); assign('addUser',addUser);
+  assign('applySearchAndRender',applySearchAndRender); assign('applySearchFilters',applySearchFilters);
+  assign('changeAdminPassword',changeAdminPassword); assign('changeMyPassword',changeMyPassword);
+  assign('clearAllData',clearAllData); assign('clearSearch',clearSearch);
+  assign('closeModal',closeModal); assign('deleteDocFile',deleteDocFile);
+  assign('deleteFault',deleteFault); assign('deleteFile',deleteFile);
+  assign('deleteNote',deleteNote); assign('deletePhoto',deletePhoto);
+  assign('deleteService',deleteService); assign('deleteStation',deleteStation);
+  assign('deleteUser',deleteUser); assign('deleteVehicle',deleteVehicle);
+  assign('doLogin',doLogin); assign('doLogout',doLogout);
+  assign('exportData',exportData); assign('handleDocFileUpload',handleDocFileUpload);
+  assign('handleFileUpload',handleFileUpload); assign('handlePhotoUpload',handlePhotoUpload);
+  assign('importData',importData); assign('openAddFault',openAddFault);
+  assign('openAddService',openAddService); assign('openAddStation',openAddStation);
+  assign('openAddVehicle',openAddVehicle); assign('openChangeMyPassword',openChangeMyPassword);
+  assign('openEditFault',openEditFault); assign('openEditUser',openEditUser);
+  assign('openSearchModal',openSearchModal); assign('openVehicle',openVehicle);
+  assign('renderUserTable',renderUserTable);
+  assign('saveEditUser',saveEditUser); assign('saveFault',saveFault);
+  assign('saveService',saveService); assign('saveStation',saveStation);
+  assign('saveVehicle',saveVehicle); assign('setRegion',setRegion);
+  assign('setTypeFilter',setTypeFilter); assign('showAdminPanel',showAdminPanel);
+  assign('switchModalTab',switchModalTab); assign('toggleFaultStatus',toggleFaultStatus);
+  assign('editFault',openEditFault); assign('editService',openAddService);
+  assign('switchAdminTab',switchAdminTab); assign('openAddPool',openAddPool);
+  assign('savePool',savePool); assign('editPool',editPool); assign('deletePool',deletePool);
+  assign('handlePoolPhoto',handlePoolPhoto); assign('clearPoolPhoto',clearPoolPhoto);
+  assign('onPoolBrandChange',onPoolBrandChange); assign('onPoolModelChange',onPoolModelChange);
+  assign('poolBrandInput',function(){}); assign('populatePoolSelects',populatePoolSelects);
+})();
+
+// ── INIT ──
+(async function init(){
+  const loginCard = document.querySelector('.login-card');
+  const origHTML = loginCard.innerHTML;
+  loginCard.innerHTML = `
+    <div style="text-align:center;padding:40px 0;">
+      <div style="font-size:3rem;margin-bottom:16px;">🚒</div>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:1.3rem;font-weight:700;color:#fff;margin-bottom:8px;">Sistem Yükleniyor...</div>
+      <div style="color:var(--text-muted);font-size:.85rem;">Sunucuya bağlanılıyor</div>
+      <div style="margin-top:20px;width:40px;height:40px;border:3px solid rgba(255,255,255,.1);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:20px auto 0;"></div>
+    </div>
+    <style>@keyframes spin{to{transform:rotate(360deg);}}</style>
+  `;
+  try { await getDB(); } catch(e){ console.error('DB yükleme hatası',e); }
+  loginCard.innerHTML = origHTML;
+  document.getElementById('loginPass')?.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  document.getElementById('loginUser')?.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginPass').focus();});
+  const saved = localStorage.getItem(SESSION_KEY);
+  if(saved){
+    try{
+      currentUser=JSON.parse(saved);
+      document.getElementById('loginScreen').style.display='none';
+      document.getElementById('appBar').style.display='block';
+      document.getElementById('appRoot').style.display='block';
+      setupUI();
+      await renderAll();
+    }catch(e){ localStorage.removeItem(SESSION_KEY); }
+  }
+})();
+</script>
+</body>
+</html>
